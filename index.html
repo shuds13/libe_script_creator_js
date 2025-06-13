@@ -106,7 +106,33 @@
               <span id="inputPathLabelText">Input File Path:</span>
               <input name="input_path" required>
             </label>
-            <label class="checkbox-label">Templated <input type="checkbox" id="templatedEnable" name="templated_enable"></label>
+            <label class="checkbox-label" id="templatedTooltipLabel" style="position: relative; cursor: pointer;">
+              Templated <input type="checkbox" id="templatedEnable" name="templated_enable">
+              <span id="templatedTooltip" style="
+                display: none;
+                position: absolute;
+                left: 0;
+                top: 120%;
+                z-index: 10;
+                background: #222;
+                color: #fff;
+                padding: 10px 14px;
+                border-radius: 6px;
+                font-size: 12px;
+                min-width: 260px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+                white-space: pre-line;
+                pointer-events: none;
+              ">
+                Input file contains templated parameters that will vary for each simulation<br>
+                <strong>Example:</strong>
+                <pre style="background: #222; color: #fff; border-radius: 4px; padding: 6px 8px; margin: 0; font-size: 11px; line-height: 1.2; box-shadow: none;">
+input.txt
+beam_length: {{bl}}
+beam_height: {{bh}}
+</pre>
+              </span>
+            </label>
           </div>
           <div id="templatedFields" style="display:none; margin-top:8px; margin-left: 32px; border-left: 2px solid #eee; padding-left: 12px;">
             <label id="templatedFileLabel" style="display:none;">Template Filename: <input name="templated_filename" placeholder="input.txt"></label>
@@ -426,6 +452,27 @@
       }
       
       setupTemplateVarButtons();
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+      // Tooltip for Templated label
+      const tooltipLabel = document.getElementById('templatedTooltipLabel');
+      const tooltip = document.getElementById('templatedTooltip');
+      if (tooltipLabel && tooltip) {
+        tooltipLabel.addEventListener('mouseenter', function() {
+          tooltip.style.display = 'block';
+        });
+        tooltipLabel.addEventListener('mouseleave', function() {
+          tooltip.style.display = 'none';
+        });
+        // Also show tooltip when focusing the checkbox (for accessibility)
+        const templatedCheckbox = document.getElementById('templatedEnable');
+        templatedCheckbox.addEventListener('focus', function() {
+          tooltip.style.display = 'block';
+        });
+        templatedCheckbox.addEventListener('blur', function() {
+          tooltip.style.display = 'none';
+        });
+      }
     });
   </script>
 </body>
