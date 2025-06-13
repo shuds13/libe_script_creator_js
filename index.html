@@ -7,6 +7,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mustache@4.2.0/mustache.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -22,9 +25,11 @@
       margin-bottom: 16px;
     }
     pre {
-      background: #eee;
+      background: #f6f8fa;
       padding: 10px;
       overflow-x: auto;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
     #fillBtn {
       margin: 10px 0;
@@ -69,6 +74,18 @@
     .toggle-group {
       display: flex;
       gap: 5px;
+    }
+    details summary {
+      background-color: #e9ecef;
+      padding: 6px 10px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    details summary::after,
+    details[open] summary::after {
+      content: none;
     }
   </style>
 </head>
@@ -124,16 +141,16 @@
     <div id="outputLayout" class="output-columns">
       <div class="output-column">
         <p><strong>run_libe.py:</strong> <a id="runLink" download="run_libe.py">Download</a></p>
-        <details>
+        <details open>
           <summary>Show Script</summary>
-          <pre id="runScript"></pre>
+          <pre><code id="runScript" class="language-python"></code></pre>
         </details>
       </div>
       <div class="output-column">
         <p><strong>simf.py:</strong> <a id="simfLink" download="simf.py">Download</a></p>
-        <details>
+        <details open>
           <summary>Show Script</summary>
-          <pre id="simfScript"></pre>
+          <pre><code id="simfScript" class="language-python"></code></pre>
         </details>
       </div>
     </div>
@@ -196,9 +213,12 @@
       const runRendered = Mustache.render(runTpl, data);
       const simfRendered = Mustache.render(simfTpl, data);
 
-      document.getElementById('runScript').innerText = runRendered;
-      document.getElementById('simfScript').innerText = simfRendered;
+      document.getElementById('runScript').textContent = runRendered;
+      document.getElementById('simfScript').textContent = simfRendered;
       document.getElementById('output').style.display = 'block';
+
+      hljs.highlightElement(document.getElementById('runScript'));
+      hljs.highlightElement(document.getElementById('simfScript'));
 
       document.getElementById('runLink').href = URL.createObjectURL(new Blob([runRendered], {type: 'text/x-python'}));
       document.getElementById('simfLink').href = URL.createObjectURL(new Blob([simfRendered], {type: 'text/x-python'}));
