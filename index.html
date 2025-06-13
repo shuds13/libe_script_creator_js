@@ -11,122 +11,53 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
   <style>
-    body {
-      font-family: sans-serif;
-      font-size: 10px;
-    }
-    input, select {
-      margin-bottom: 8px;
-      display: block;
-      width: 100%;
-      max-width: 400px;
-    }
-    fieldset {
-      margin-bottom: 16px;
-    }
-    pre {
-      background: #f6f8fa;
-      padding: 10px;
-      overflow-x: auto;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    #fillBtn {
-      margin: 10px 0;
-    }
-    .form-columns {
-      display: flex;
-      gap: 20px;
-    }
-    .form-column {
-      flex: 1;
-      min-width: 0;
-    }
-    .output-columns,
-    .output-stack {
-      gap: 20px;
-    }
-    .output-columns {
-      display: flex;
-    }
-    .output-stack {
-      display: block;
-    }
-    .output-column {
-      flex: 1;
-    }
-    .button-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .toggle-option {
-      border: 1px solid #ccc;
-      padding: 4px 8px;
-      cursor: pointer;
-      user-select: none;
-    }
-    .toggle-option.active {
-      background-color: #007bff;
-      color: white;
-    }
-    .toggle-group {
-      display: flex;
-      gap: 5px;
-    }
-    details summary {
-      background-color: #e9ecef;
-      padding: 6px 10px;
-      cursor: pointer;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-weight: bold;
-    }
-    details summary::after,
-    details[open] summary::after {
-      content: none;
-    }
+    body { font-family: sans-serif; font-size: 10px; }
+    input, select { margin-bottom: 8px; display: block; width: 100%; max-width: 400px; }
+    fieldset { margin-bottom: 16px; }
+    pre { background: #f6f8fa; padding: 10px; overflow-x: auto; border: 1px solid #ccc; border-radius: 5px; }
+    #fillBtn { margin: 10px 0; }
+    .form-columns { display: flex; gap: 20px; }
+    .form-column { flex: 1; min-width: 0; }
+    .output-columns, .output-stack { gap: 20px; }
+    .output-columns { display: flex; }
+    .output-stack { display: block; }
+    .output-column { flex: 1; }
+    .button-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .toggle-option { border: 1px solid #ccc; padding: 4px 8px; cursor: pointer; user-select: none; }
+    .toggle-option.active { background-color: #007bff; color: white; }
+    .toggle-group { display: flex; gap: 5px; }
+    details summary { background-color: #e9ecef; padding: 6px 10px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; font-weight: bold; }
+    details summary::after, details[open] summary::after { content: none; }
   </style>
 </head>
 <body>
   <h2>Generate libEnsemble Run Scripts</h2>
-
   <button id="fillBtn" type="button">Fill with Sample Data</button>
-
   <form id="scriptForm">
-    <fieldset>
-      <legend><strong>Application Reference</strong></legend>
+    <fieldset><legend><strong>Application Reference</strong></legend>
       <label>Application Reference Name: <input name="app_ref" required></label>
     </fieldset>
-
     <div class="form-columns">
       <div class="form-column">
-        <fieldset>
-          <legend><strong>Manager Settings</strong></legend>
+        <fieldset><legend><strong>Manager Settings</strong></legend>
           <label>Number of Workers: <input name="num_workers" type="number" required></label>
           <label>MPI App Full Path: <input name="sim_app" required></label>
           <label>Input Filename: <input name="input_file" required></label>
           <label>Max Simulations: <input name="max_sims" type="number"></label>
         </fieldset>
-
-        <fieldset>
-          <legend><strong>Generator Selection</strong></legend>
+        <fieldset><legend><strong>Generator Selection</strong></legend>
           <label>Generator Module: <select name="gen_module" id="gen_module"></select></label>
           <label>Generator Function: <select name="gen_function" id="gen_function"></select></label>
         </fieldset>
       </div>
-
       <div class="form-column">
-        <fieldset>
-          <legend><strong>Worker Settings</strong></legend>
+        <fieldset><legend><strong>Worker Settings</strong></legend>
           <label>Number of Nodes: <input name="nodes" type="number" value="1"></label>
           <label>Number of Procs: <input name="procs" type="number" value="1"></label>
           <label>Number of GPUs: <input name="gpus" placeholder="None"></label>
         </fieldset>
       </div>
     </div>
-
     <div class="button-row">
       <button type="submit">Generate Scripts</button>
       <div class="toggle-group" title="Toggle output layout">
@@ -135,124 +66,91 @@
       </div>
     </div>
   </form>
-
   <div id="output" style="display:none">
     <p><strong><a id="zipLink" href="#">Download All</a></strong></p>
     <div id="outputLayout" class="output-columns">
       <div class="output-column">
         <p><strong>run_libe.py:</strong> <a id="runLink" download="run_libe.py">Download</a></p>
-        <details open>
-          <summary>Show Script</summary>
+        <details open><summary>Show Script</summary>
           <pre><code id="runScript" class="language-python"></code></pre>
         </details>
       </div>
       <div class="output-column">
         <p><strong>simf.py:</strong> <a id="simfLink" download="simf.py">Download</a></p>
-        <details open>
-          <summary>Show Script</summary>
+        <details open><summary>Show Script</summary>
           <pre><code id="simfScript" class="language-python"></code></pre>
         </details>
       </div>
     </div>
   </div>
-
   <script>
-    const templatePaths = {
-      run: 'templates/run_libe.py.j2',
-      simf: 'templates/simf.py.j2'
-    };
-
+    const templatePaths = { run: 'templates/run_libe.py.j2', simf: 'templates/simf.py.j2' };
     async function fetchTemplates() {
-      const ts = Date.now(); // Cache-busting query
+      const ts = Date.now();
       const [runTpl, simfTpl] = await Promise.all([
         fetch(`${templatePaths.run}?_=${ts}`).then(r => r.text()),
         fetch(`${templatePaths.simf}?_=${ts}`).then(r => r.text())
       ]);
       return { runTpl, simfTpl };
     }
-
-    fetch("data/generators.json")
-      .then(res => res.json())
-      .then(data => {
-        const modSel = document.getElementById("gen_module");
-        const funcSel = document.getElementById("gen_function");
-        Object.keys(data).forEach(mod => modSel.add(new Option(mod, mod)));
-        modSel.onchange = () => {
-          funcSel.innerHTML = "";
-          data[modSel.value].forEach(func => funcSel.add(new Option(func, func)));
-        };
-        modSel.onchange();
-      });
-
+    fetch("data/generators.json").then(res => res.json()).then(data => {
+      const modSel = document.getElementById("gen_module"), funcSel = document.getElementById("gen_function");
+      Object.keys(data).forEach(mod => modSel.add(new Option(mod, mod)));
+      modSel.onchange = () => { funcSel.innerHTML = ""; data[modSel.value].forEach(f => funcSel.add(new Option(f, f))); };
+      modSel.onchange();
+    });
     document.getElementById("layoutSideBySide").onclick = function() {
       document.getElementById("outputLayout").className = "output-columns";
-      this.classList.add("active");
-      document.getElementById("layoutStacked").classList.remove("active");
+      this.classList.add("active"); document.getElementById("layoutStacked").classList.remove("active");
     };
-
     document.getElementById("layoutStacked").onclick = function() {
       document.getElementById("outputLayout").className = "output-stack";
-      this.classList.add("active");
-      document.getElementById("layoutSideBySide").classList.remove("active");
+      this.classList.add("active"); document.getElementById("layoutSideBySide").classList.remove("active");
     };
-
     document.getElementById('scriptForm').onsubmit = async function(e) {
       e.preventDefault();
-      const form = e.target;
-      const data = {};
-      for (const [k, v] of new FormData(form).entries()) {
-        data[k] = v;
-      }
+      const form = e.target, data = {};
+      for (const [k,v] of new FormData(form).entries()) data[k]=v;
       const rawGpus = form.gpus.value.trim();
-      data.num_gpus = rawGpus === "" || rawGpus.toLowerCase() === "none" ? null : parseInt(rawGpus);
-      data.gpus_line = data.num_gpus !== null ? `num_gpus=${data.num_gpus},` : "";
-
-      const { runTpl, simfTpl } = await fetchTemplates();
-      console.log('sim_app value:', data.sim_app);
-      Mustache.escape = function (text) { return text; };
-      const runRendered = Mustache.render(runTpl, data);
-      const simfRendered = Mustache.render(simfTpl, data);
-
-      document.getElementById('runScript').textContent = runRendered;
-      document.getElementById('simfScript').textContent = simfRendered;
-      document.getElementById('output').style.display = 'block';
-
-      hljs.highlightElement(document.getElementById('runScript'));
-      hljs.highlightElement(document.getElementById('simfScript'));
-
-      document.getElementById('runLink').href = URL.createObjectURL(new Blob([runRendered], {type: 'text/x-python'}));
-      document.getElementById('simfLink').href = URL.createObjectURL(new Blob([simfRendered], {type: 'text/x-python'}));
-
-      document.getElementById('zipLink').onclick = function() {
-        const zip = new JSZip();
-        zip.file("run_libe.py", runRendered);
-        zip.file("simf.py", simfRendered);
-        zip.generateAsync({type:"blob"}).then(content => saveAs(content, "scripts.zip"));
-      };
-    };
-
-    document.getElementById("fillBtn").onclick = function () {
-      const f = document.forms[0];
-      f.app_ref.value = "warpx";
-      f.num_workers.value = "4";
-      f.sim_app.value = "/home/user/warpx.x";
-      f.input_file.value = "warpx_input";
-      f.max_sims.value = "8";
-      f.nodes.value = "2";
-      f.procs.value = "16";
-      f.gpus.value = "";
-      const moduleSelect = document.getElementById("gen_module");
-      const funcSelect = document.getElementById("gen_function");
-      if (moduleSelect.options.length > 0) {
-        moduleSelect.selectedIndex = 0;
-        moduleSelect.dispatchEvent(new Event("change"));
-        setTimeout(() => {
-          if (funcSelect.options.length > 0) {
-            funcSelect.selectedIndex = 0;
-          }
-        }, 50);
+      data.num_gpus = rawGpus===""||rawGpus.toLowerCase()==="none"?null:parseInt(rawGpus);
+      data.gpus_line = data.num_gpus!==null?`num_gpus=${data.num_gpus},`:"";
+      const { runTpl, simfTpl } = await fetchTemplates(); Mustache.escape=text=>text;
+      const runRendered = Mustache.render(runTpl,data);
+      const simfRendered = Mustache.render(simfTpl,data);
+      function updateCodeBlock(id, code) {
+        const pre = document.getElementById(id).parentElement;
+        pre.innerHTML = `<code id="${id}" class="language-python"></code>`;
+        const newCode = document.getElementById(id);
+        newCode.textContent = code;
+        hljs.highlightElement(newCode);
       }
+      updateCodeBlock('runScript', runRendered);
+      updateCodeBlock('simfScript', simfRendered);
+      document.getElementById('output').style.display='block';
+      document.getElementById('runLink').href=URL.createObjectURL(new Blob([runRendered],{type:'text/x-python'}));
+      document.getElementById('simfLink').href=URL.createObjectURL(new Blob([simfRendered],{type:'text/x-python'}));
+      document.getElementById('zipLink').onclick=function(){
+        const zip=new JSZip(); zip.file("run_libe.py",runRendered); zip.file("simf.py",simfRendered);
+        zip.generateAsync({type:"blob"}).then(content=>saveAs(content,"scripts.zip"));};
     };
+    document.getElementById("fillBtn").onclick = function() {
+        const f = document.forms[0];
+        f.elements["app_ref"].value = "warpx";
+        f.elements["num_workers"].value = "4";
+        f.elements["sim_app"].value = "/home/user/warpx.x";
+        f.elements["input_file"].value = "warpx_input";
+        f.elements["max_sims"].value = "8";
+        f.elements["nodes"].value = "2";
+        f.elements["procs"].value = "16";
+        f.elements["gpus"].value = "";
+        const modSel = document.getElementById("gen_module");
+        const funcSel = document.getElementById("gen_function");
+        modSel.selectedIndex = 0;
+        modSel.dispatchEvent(new Event("change"));
+        setTimeout(() => {
+          if (funcSel.options.length > 0) funcSel.selectedIndex = 0;
+        }, 50);
+      };
   </script>
 </body>
 </html>
