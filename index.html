@@ -213,13 +213,20 @@
       const runRendered = Mustache.render(runTpl, data);
       const simfRendered = Mustache.render(simfTpl, data);
 
-      document.getElementById('runScript').textContent = runRendered;
-      document.getElementById('simfScript').textContent = simfRendered;
+      function updateCodeBlock(containerId, code) {
+        const container = document.getElementById(containerId).parentElement;
+        container.innerHTML = '';
+        const newCode = document.createElement('code');
+        newCode.className = 'language-python';
+        newCode.textContent = code;
+        container.appendChild(newCode);
+        hljs.highlightElement(newCode);
+      }
+
+      updateCodeBlock('runScript', runRendered);
+      updateCodeBlock('simfScript', simfRendered);
+
       document.getElementById('output').style.display = 'block';
-
-      hljs.highlightElement(document.getElementById('runScript'));
-      hljs.highlightElement(document.getElementById('simfScript'));
-
       document.getElementById('runLink').href = URL.createObjectURL(new Blob([runRendered], {type: 'text/x-python'}));
       document.getElementById('simfLink').href = URL.createObjectURL(new Blob([simfRendered], {type: 'text/x-python'}));
 
