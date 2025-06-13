@@ -1,0 +1,15 @@
+#!/bin/bash
+#SBATCH -J libE_simple
+#SBATCH -A <myproject>
+#SBATCH -p <partition_name>
+#SBATCH -C <constraint_name>
+#SBATCH --time 15
+#SBATCH --nodes {{ total_nodes }}
+
+# Usually either -p or -C above is used.
+
+{{#num_gpus}}
+export MPICH_GPU_SUPPORT_ENABLED=1
+{{/num_gpus}}
+
+python run_libe.py

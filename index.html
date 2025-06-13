@@ -51,6 +51,16 @@
     .toggle-group { display: flex; gap: 5px; }
     details summary { background-color: #e9ecef; padding: 6px 10px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; font-weight: bold; }
     details summary::after, details[open] summary::after { content: none; }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      direction: ltr;
+    }
+    .checkbox-label input[type="checkbox"] {
+      vertical-align: middle;
+      margin: 0 4px 0 0;
+    }
   </style>
 </head>
 <body>
@@ -72,6 +82,19 @@
           <label>Generator Module: <select name="gen_module" id="gen_module"></select></label>
           <label>Generator Function: <select name="gen_function" id="gen_function"></select></label>
         </fieldset>
+        <!-- Cluster Section -->
+        <fieldset><legend><strong>Cluster</strong></legend>
+          <label class="checkbox-label">Run on Cluster <input type="checkbox" id="clusterEnable" name="cluster_enable"></label>
+          <div id="clusterFields" style="display:none; margin-top:8px;">
+            <label>Total Nodes: <input name="cluster_total_nodes" type="number"></label>
+            <label>Scheduler Type:
+              <select name="scheduler_type">
+                <option value="slurm">Slurm</option>
+                <option value="pbs">PBS</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
       </div>
       <div class="form-column">
         <fieldset><legend><strong>Worker Settings</strong></legend>
@@ -91,6 +114,12 @@
   </form>
   <div id="output" style="display:none">
     <p><strong><a id="zipLink" href="#">Download All</a></strong></p>
+    <div id="batchColumn" style="display:none; margin-bottom: 20px;">
+      <p><strong id="batchFilename">submit.sh:</strong> <a id="batchLink" download="submit.sh">Download</a></p>
+      <details><summary>Show Script</summary>
+        <pre><code id="batchScript" class="language-bash"></code></pre>
+      </details>
+    </div>
     <div id="outputLayout" class="output-columns">
       <div class="output-column">
         <p><strong>run_libe.py:</strong> <a id="runLink" download="run_libe.py">Download</a></p>
@@ -107,14 +136,31 @@
     </div>
   </div>
   <script>
-    const templatePaths = { run: 'templates/run_libe.py.j2', simf: 'templates/simf.py.j2' };
-    async function fetchTemplates() {
+    const templatePaths = { 
+      run: 'templates/run_libe.py.j2', 
+      simf: 'templates/simf.py.j2',
+      batch_slurm: 'templates/submit_slurm.sh.j2',
+      batch_pbs: 'templates/submit_pbs.sh.j2'
+    };
+    async function fetchTemplates(clusterEnabled, schedulerType) {
       const ts = Date.now();
-      const [runTpl, simfTpl] = await Promise.all([
+      const promises = [
         fetch(`${templatePaths.run}?_=${ts}`).then(r => r.text()),
         fetch(`${templatePaths.simf}?_=${ts}`).then(r => r.text())
-      ]);
-      return { runTpl, simfTpl };
+      ];
+      
+      let batchTpl = null;
+      if (clusterEnabled && schedulerType) {
+        const batchPath = schedulerType === 'slurm' ? templatePaths.batch_slurm : templatePaths.batch_pbs;
+        promises.push(fetch(`${batchPath}?_=${ts}`).then(r => r.text()));
+      }
+      
+      const results = await Promise.all(promises);
+      return { 
+        runTpl: results[0], 
+        simfTpl: results[1], 
+        batchTpl: results[2] || null 
+      };
     }
     fetch("data/generators.json").then(res => res.json()).then(data => {
       const modSel = document.getElementById("gen_module"), funcSel = document.getElementById("gen_function");
@@ -137,12 +183,34 @@
       const rawGpus = form.gpus.value.trim();
       data.num_gpus = rawGpus===""||rawGpus.toLowerCase()==="none"?null:parseInt(rawGpus);
       data.gpus_line = data.num_gpus!==null?`num_gpus=${data.num_gpus},`:"";
-      const { runTpl, simfTpl } = await fetchTemplates(); Mustache.escape=text=>text;
+      // Cluster logic
+      data.cluster_enabled = form.cluster_enable.checked;
+      data.cluster_total_nodes = data.cluster_enabled ? form.cluster_total_nodes.value : null;
+      data.scheduler_type = data.cluster_enabled ? form.scheduler_type.value : null;
+      data.total_nodes = data.cluster_total_nodes; // For template compatibility
+      
+      const { runTpl, simfTpl, batchTpl } = await fetchTemplates(data.cluster_enabled, data.scheduler_type); 
+      Mustache.escape=text=>text;
       const runRendered = Mustache.render(runTpl,data);
       const simfRendered = Mustache.render(simfTpl,data);
+      let batchRendered = null;
+      
+      if (data.cluster_enabled && batchTpl) {
+        batchRendered = Mustache.render(batchTpl, data);
+        const batchFilename = data.scheduler_type === 'slurm' ? 'submit_slurm.sh' : 'submit_pbs.sh';
+        document.getElementById('batchFilename').textContent = `${batchFilename}:`;
+        document.getElementById('batchLink').download = batchFilename;
+        document.getElementById('batchColumn').style.display = '';
+        updateCodeBlock('batchScript', batchRendered);
+        document.getElementById('batchLink').href=URL.createObjectURL(new Blob([batchRendered],{type:'text/x-shellscript'}));
+      } else {
+        document.getElementById('batchColumn').style.display = 'none';
+      }
+      
       function updateCodeBlock(id, code) {
         const pre = document.getElementById(id).parentElement;
-        pre.innerHTML = `<code id="${id}" class="language-python"></code>`;
+        const language = id === 'batchScript' ? 'language-bash' : 'language-python';
+        pre.innerHTML = `<code id="${id}" class="${language}"></code>`;
         const newCode = document.getElementById(id);
         newCode.textContent = code;
         hljs.highlightElement(newCode);
@@ -153,8 +221,15 @@
       document.getElementById('runLink').href=URL.createObjectURL(new Blob([runRendered],{type:'text/x-python'}));
       document.getElementById('simfLink').href=URL.createObjectURL(new Blob([simfRendered],{type:'text/x-python'}));
       document.getElementById('zipLink').onclick=function(){
-        const zip=new JSZip(); zip.file("run_libe.py",runRendered); zip.file("simf.py",simfRendered);
-        zip.generateAsync({type:"blob"}).then(content=>saveAs(content,"scripts.zip"));};
+        const zip=new JSZip(); 
+        zip.file("run_libe.py",runRendered); 
+        zip.file("simf.py",simfRendered);
+        if (batchRendered) {
+          const batchFilename = data.scheduler_type === 'slurm' ? 'submit_slurm.sh' : 'submit_pbs.sh';
+          zip.file(batchFilename, batchRendered);
+        }
+        zip.generateAsync({type:"blob"}).then(content=>saveAs(content,"scripts.zip"));
+      };
     };
     document.getElementById("fillBtn").onclick = function() {
         const f = document.forms[0];
@@ -174,6 +249,16 @@
           if (funcSel.options.length > 0) funcSel.selectedIndex = 0;
         }, 50);
       };
+    // Cluster section show/hide logic
+    document.addEventListener('DOMContentLoaded', function() {
+      const clusterEnable = document.getElementById('clusterEnable');
+      const clusterFields = document.getElementById('clusterFields');
+      if (clusterEnable) {
+        clusterEnable.addEventListener('change', function() {
+          clusterFields.style.display = this.checked ? '' : 'none';
+        });
+      }
+    });
   </script>
 </body>
 </html>
