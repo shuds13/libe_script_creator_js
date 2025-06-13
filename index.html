@@ -37,7 +37,7 @@
       background-color: #f9f9f9;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    pre { background: #f6f8fa; padding: 10px; overflow-x: auto; border: 1px solid #ccc; border-radius: 5px; }
+    pre { background: #f6f8fa; padding: 10px; overflow-x: auto; border: 1px solid #ccc; border-radius: 5px; position: relative; }
     #fillBtn { margin: 10px 0; }
     .form-columns { display: flex; gap: 20px; }
     .form-column { flex: 1; min-width: 0; }
@@ -61,6 +61,21 @@
       vertical-align: middle;
       margin: 0 4px 0 0;
     }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px;
+      z-index: 2;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .copy-btn:hover { opacity: 1; }
+    .copy-btn svg { width: 22px; height: 22px; display: block; }
+    .copy-btn.copied svg { color: #28a745; }
   </style>
 </head>
 <body>
@@ -93,7 +108,7 @@
         <fieldset><legend><strong>Cluster</strong></legend>
           <label class="checkbox-label">Run on Cluster <input type="checkbox" id="clusterEnable" name="cluster_enable"></label>
           <div id="clusterFields" style="display:none; margin-top:8px;">
-            <label>Total Nodes: <input name="cluster_total_nodes" type="number"></label>
+            <label>Total Nodes: <input name="cluster_total_nodes" type="number" value="1"></label>
             <label>Scheduler Type:
               <select name="scheduler_type">
                 <option value="slurm">Slurm</option>
@@ -117,20 +132,20 @@
     <div id="batchColumn" style="display:none; margin-bottom: 20px;">
       <p><strong id="batchFilename">submit.sh:</strong> <a id="batchLink" download="submit.sh">Download</a></p>
       <details><summary>Show Script</summary>
-        <pre><code id="batchScript" class="language-bash"></code></pre>
+        <pre><button type="button" class="copy-btn" data-copytarget="batchScript" title="Copy"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="9" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="5" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><code id="batchScript" class="language-bash"></code></pre>
       </details>
     </div>
     <div id="outputLayout" class="output-columns">
       <div class="output-column">
         <p><strong>run_libe.py:</strong> <a id="runLink" download="run_libe.py">Download</a></p>
         <details open><summary>Show Script</summary>
-          <pre><code id="runScript" class="language-python"></code></pre>
+          <pre><button type="button" class="copy-btn" data-copytarget="runScript" title="Copy"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="9" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="5" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><code id="runScript" class="language-python"></code></pre>
         </details>
       </div>
       <div class="output-column">
         <p><strong>simf.py:</strong> <a id="simfLink" download="simf.py">Download</a></p>
         <details open><summary>Show Script</summary>
-          <pre><code id="simfScript" class="language-python"></code></pre>
+          <pre><button type="button" class="copy-btn" data-copytarget="simfScript" title="Copy"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="9" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="5" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><code id="simfScript" class="language-python"></code></pre>
         </details>
       </div>
     </div>
@@ -210,10 +225,11 @@
       function updateCodeBlock(id, code) {
         const pre = document.getElementById(id).parentElement;
         const language = id === 'batchScript' ? 'language-bash' : 'language-python';
-        pre.innerHTML = `<code id="${id}" class="${language}"></code>`;
+        pre.innerHTML = `<button type="button" class="copy-btn" data-copytarget="${id}" title="Copy"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="9" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="5" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><code id="${id}" class="${language}"></code>`;
         const newCode = document.getElementById(id);
         newCode.textContent = code;
         hljs.highlightElement(newCode);
+        setupCopyIcons();
       }
       updateCodeBlock('runScript', runRendered);
       updateCodeBlock('simfScript', simfRendered);
@@ -230,6 +246,28 @@
         }
         zip.generateAsync({type:"blob"}).then(content=>saveAs(content,"scripts.zip"));
       };
+      // Clipboard copy logic for all scripts (icon in code block)
+      function setupCopyIcons() {
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+          btn.onclick = async function(e) {
+            e.stopPropagation();
+            const codeId = btn.getAttribute('data-copytarget');
+            const code = document.getElementById(codeId).textContent;
+            try {
+              await navigator.clipboard.writeText(code);
+              btn.classList.add('copied');
+              btn.title = 'Copied!';
+              setTimeout(() => { btn.classList.remove('copied'); btn.title = 'Copy'; }, 1200);
+            } catch (e) {
+              btn.title = 'Error';
+              setTimeout(() => { btn.title = 'Copy'; }, 1200);
+            }
+          };
+        });
+      }
+      document.addEventListener('DOMContentLoaded', setupCopyIcons);
+      // Also re-setup copy icons after scripts are generated (in case of rerender)
+      setupCopyIcons();
     };
     document.getElementById("fillBtn").onclick = function() {
         const f = document.forms[0];
