@@ -37,12 +37,38 @@
       flex: 1;
       min-width: 0;
     }
+    .output-columns,
+    .output-stack {
+      gap: 20px;
+    }
     .output-columns {
       display: flex;
-      gap: 20px;
+    }
+    .output-stack {
+      display: block;
     }
     .output-column {
       flex: 1;
+    }
+    .button-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .toggle-option {
+      border: 1px solid #ccc;
+      padding: 4px 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-option.active {
+      background-color: #007bff;
+      color: white;
+    }
+    .toggle-group {
+      display: flex;
+      gap: 5px;
     }
   </style>
 </head>
@@ -84,12 +110,18 @@
       </div>
     </div>
 
-    <button type="submit">Generate Scripts</button>
+    <div class="button-row">
+      <button type="submit">Generate Scripts</button>
+      <div class="toggle-group" title="Toggle output layout">
+        <div id="layoutSideBySide" class="toggle-option active">⬌</div>
+        <div id="layoutStacked" class="toggle-option">⬍</div>
+      </div>
+    </div>
   </form>
 
   <div id="output" style="display:none">
     <p><strong><a id="zipLink" href="#">Download All</a></strong></p>
-    <div class="output-columns">
+    <div id="outputLayout" class="output-columns">
       <div class="output-column">
         <p><strong>run_libe.py:</strong> <a id="runLink" download="run_libe.py">Download</a></p>
         <details>
@@ -134,6 +166,18 @@
         };
         modSel.onchange();
       });
+
+    document.getElementById("layoutSideBySide").onclick = function() {
+      document.getElementById("outputLayout").className = "output-columns";
+      this.classList.add("active");
+      document.getElementById("layoutStacked").classList.remove("active");
+    };
+
+    document.getElementById("layoutStacked").onclick = function() {
+      document.getElementById("outputLayout").className = "output-stack";
+      this.classList.add("active");
+      document.getElementById("layoutSideBySide").classList.remove("active");
+    };
 
     document.getElementById('scriptForm').onsubmit = async function(e) {
       e.preventDefault();
