@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+  <!-- Prevent caching of template files during development -->
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <meta charset="UTF-8">
+  <title>libEnsemble Script Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mustache@4.2.0/mustache.min.js"></script>
+  <style>
+    body {
+  font-family: sans-serif;
+  font-size: 10px;
+}
+    input, select {
+      margin-bottom: 8px;
+      display: block;
+      width: 100%;
+      max-width: 400px;
+    }
+    fieldset {
+      margin-bottom: 16px;
+    }
+    pre {
+      background: #eee;
+      padding: 10px;
+      overflow-x: auto;
+    }
+    #fillBtn {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h2>Generate libEnsemble Run Scripts</h2>
+
+  <button id="fillBtn" type="button">Fill with Sample Data</button>
+
+  <form id="scriptForm">
+    <fieldset>
+      <legend><strong>Application Reference</strong></legend>
+      <label>Application Reference Name: <input name="app_ref" required></label>
+    </fieldset>
+
+    <fieldset>
+      <legend><strong>Manager Settings</strong></legend>
+      <label>Number of Workers: <input name="num_workers" type="number" required></label>
+      <label>MPI App Full Path: <input name="sim_app" required></label>
+      <label>Input Filename: <input name="input_file" required></label>
+      <label>Max Simulations: <input name="max_sims" type="number"></label>
+    </fieldset>
+
+    <fieldset>
+      <legend><strong>Generator Selection</strong></legend>
+      <label>Generator Module: <select name="gen_module" id="gen_module"></select></label>
+      <label>Generator Function: <select name="gen_function" id="gen_function"></select></label>
+    </fieldset>
+
+    <fieldset>
+      <legend><strong>Worker Settings</strong></legend>
+      <label>Number of Nodes: <input name="nodes" type="number" value="1"></label>
+      <label>Number of Procs: <input name="procs" type="number" value="1"</label>
+      <label>Number of GPUs: <input name="gpus" placeholder="None"></label>
+    </fieldset>
+
+    <button type="submit">Generate Scripts</button>
+  </form>
+
+  <div id="output" style="display:none">
+    <p><strong><a id="zipLink" href="#">Download All</a></strong></p>
+    <p><strong>run_libe.py:</strong> <a id="runLink" download="run_libe.py">Download</a></p>
+    <!-- Removed 'open' to collapse by default -->
+<details>
+      <summary>Show Script</summary>
+      <pre id="runScript"></pre>
+    </details>
+    <p><strong>simf.py:</strong> <a id="simfLink" download="simf.py">Download</a></p>
+    <!-- Removed 'open' to collapse by default -->
+<details>
+      <summary>Show Script</summary>
+      <pre id="simfScript"></pre>
+    </details>
+  </div>
+
+  <script>
+    const templatePaths = {
+      run: 'templates/run_libe.py.j2',
+      simf: 'templates/simf.py.j2'
+    };
+
+    async function fetchTemplates() {
+      const ts = Date.now(); // Cache-busting query
+      const [runTpl, simfTpl] = await Promise.all([
+        fetch(`${templatePaths.run}?_=${ts}`).then(r => r.text()),
+        fetch(`${templatePaths.simf}?_=${ts}`).then(r => r.text())
+      ]);
+      return { runTpl, simfTpl };
+    }
+
+    fetch("data/generators.json")
+      .then(res => res.json())
+      .then(data => {
+        const modSel = document.getElementById("gen_module");
+        const funcSel = document.getElementById("gen_function");
+        Object.keys(data).forEach(mod => modSel.add(new Option(mod, mod)));
+        modSel.onchange = () => {
+          funcSel.innerHTML = "";
+          data[modSel.value].forEach(func => funcSel.add(new Option(func, func)));
+        };
+        modSel.onchange();
+      });
+
+    document.getElementById('scriptForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = {};
+      for (const [k, v] of new FormData(form).entries()) {
+        data[k] = v;
+      }
+      const rawGpus = form.gpus.value.trim();
+      data.num_gpus = rawGpus === "" || rawGpus.toLowerCase() === "none" ? null : parseInt(rawGpus);
+      data.gpus_line = data.num_gpus !== null ? `num_gpus=${data.num_gpus},` : "";
+
+      const { runTpl, simfTpl } = await fetchTemplates();
+      console.log('sim_app value:', data.sim_app);
+      Mustache.escape = function (text) { return text; };
+      const runRendered = Mustache.render(runTpl, data);
+      const simfRendered = Mustache.render(simfTpl, data);
+
+      document.getElementById('runScript').innerText = runRendered;
+      document.getElementById('simfScript').innerText = simfRendered;
+      document.getElementById('output').style.display = 'block';
+
+      document.getElementById('runLink').href = URL.createObjectURL(new Blob([runRendered], {type: 'text/x-python'}));
+      document.getElementById('simfLink').href = URL.createObjectURL(new Blob([simfRendered], {type: 'text/x-python'}));
+
+      document.getElementById('zipLink').onclick = function() {
+        const zip = new JSZip();
+        zip.file("run_libe.py", runRendered);
+        zip.file("simf.py", simfRendered);
+        zip.generateAsync({type:"blob"}).then(content => saveAs(content, "scripts.zip"));
+      };
+    };
+
+    document.getElementById("fillBtn").onclick = function () {
+      const f = document.forms[0];
+      f.app_ref.value = "warpx";
+      f.num_workers.value = "4";
+      f.sim_app.value = "/home/user/warpx.x";
+      f.input_file.value = "warpx_input";
+      f.max_sims.value = "8";
+      f.nodes.value = "2";
+      f.procs.value = "16";
+      f.gpus.value = "";
+      const moduleSelect = document.getElementById("gen_module");
+      const funcSelect = document.getElementById("gen_function");
+      if (moduleSelect.options.length > 0) {
+        moduleSelect.selectedIndex = 0;
+        moduleSelect.dispatchEvent(new Event("change"));
+        setTimeout(() => {
+          if (funcSelect.options.length > 0) {
+            funcSelect.selectedIndex = 0;
+          }
+        }, 50);
+      }
+    };
+  </script>
+</body>
+</html>
