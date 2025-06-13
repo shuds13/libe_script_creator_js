@@ -64,11 +64,11 @@ if __name__ == "__main__":
         gen_f=gen_f,
         inputs=[],
         persis_in=["sim_id"],
-        outputs=[("x", float, (1,))],
+        outputs=[("x", float, ({{ dimension }},))],
         user={
             "initial_batch_size": num_workers,
-            "lb": np.array([1000]),
-            "ub": np.array([3000]),
+            "lb": {{ lb_array }},
+            "ub": {{ ub_array }},
         },
     )
 
