@@ -12,8 +12,31 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
   <style>
     body { font-family: sans-serif; font-size: 10px; }
-    input, select { margin-bottom: 8px; display: block; width: 100%; max-width: 400px; }
-    fieldset { margin-bottom: 16px; }
+    input, select {
+      margin-bottom: 8px;
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      padding: 2px 3px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #fefefe;
+      font-size: 12px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, select:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 3px rgba(0,123,255,0.5);
+      outline: none;
+    }
+    fieldset {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border: 1px solid #bbb;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
     pre { background: #f6f8fa; padding: 10px; overflow-x: auto; border: 1px solid #ccc; border-radius: 5px; }
     #fillBtn { margin: 10px 0; }
     .form-columns { display: flex; gap: 20px; }
