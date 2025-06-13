@@ -82,6 +82,13 @@
           <label>Generator Module: <select name="gen_module" id="gen_module"></select></label>
           <label>Generator Function: <select name="gen_function" id="gen_function"></select></label>
         </fieldset>
+      </div>
+      <div class="form-column">
+        <fieldset><legend><strong>Worker Settings</strong></legend>
+          <label>Number of Nodes: <input name="nodes" type="number" value="1"></label>
+          <label>Number of Procs: <input name="procs" type="number" value="1"></label>
+          <label>Number of GPUs: <input name="gpus" placeholder="None"></label>
+        </fieldset>
         <!-- Cluster Section -->
         <fieldset><legend><strong>Cluster</strong></legend>
           <label class="checkbox-label">Run on Cluster <input type="checkbox" id="clusterEnable" name="cluster_enable"></label>
@@ -94,13 +101,6 @@
               </select>
             </label>
           </div>
-        </fieldset>
-      </div>
-      <div class="form-column">
-        <fieldset><legend><strong>Worker Settings</strong></legend>
-          <label>Number of Nodes: <input name="nodes" type="number" value="1"></label>
-          <label>Number of Procs: <input name="procs" type="number" value="1"></label>
-          <label>Number of GPUs: <input name="gpus" placeholder="None"></label>
         </fieldset>
       </div>
     </div>
