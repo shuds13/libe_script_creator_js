@@ -24,19 +24,40 @@ if __name__ == "__main__":
 
     ensemble = Ensemble(nworkers=num_workers, executor=exctr)
 
+    {{#input_file}}
     input_file = "{{ input_file }}"
+    {{/input_file}}
+
+    {{#sim_input_dir}}
+    sim_input_dir = "{{ sim_input_dir }}"
+    {{/sim_input_dir}}
 
     ensemble.libE_specs = LibeSpecs(
         gen_on_manager=True,
         sim_dirs_make=True,
+        {{#input_file}}
         sim_dir_copy_files=[input_file],
+        {{/input_file}}
+        {{#sim_input_dir}}
+        sim_input_dir=sim_input_dir,
+        {{/sim_input_dir}}
     )
 
     ensemble.sim_specs = SimSpecs(
         sim_f=run_{{ app_ref }},
         inputs=["x"],
         outputs=[("f", float)],
-        user={"input_filename": input_file, "input_names": ["particles"]},
+        {{#has_template_vars}}
+        {{#input_file_basename}}
+        user={"input_filename": "{{ input_file_basename }}", "input_names": [{{ template_vars_list }}]},
+        {{/input_file_basename}}
+        {{^input_file_basename}}
+        user={"input_filename": "{{ templated_filename }}", "input_names": [{{ template_vars_list }}]},
+        {{/input_file_basename}}
+        {{/has_template_vars}}
+        {{^has_template_vars}}
+        user={},
+        {{/has_template_vars}}
     )
 
     ensemble.gen_specs = GenSpecs(
