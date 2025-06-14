@@ -160,8 +160,9 @@ beam_height: {{bh}}
         <fieldset><legend><strong>Worker Settings</strong></legend>
           <label>Number of Nodes: <input name="nodes" type="number" value="1"></label>
           <label>Number of Procs: <input name="procs" type="number" value="1"></label>
-          <label style="display: flex; align-items: center; gap: 8px;">
-            Number of GPUs: <input name="gpus" type="number" min="0" value="0" id="gpusInput">
+          <label>Number of GPUs:</label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input name="gpus" type="number" min="0" value="0" id="gpusInput">
             <label class="checkbox-label" style="margin-bottom: 0; cursor: pointer; position: relative; display: flex; align-items: center; gap: 3px;">
               <input type="checkbox" id="autoGpus"> Auto
               <span id="autoGpusTooltip" style="
@@ -186,7 +187,7 @@ beam_height: {{bh}}
                 The number of processes / nodes are set to match.
               </span>
             </label>
-          </label>
+          </div>
         </fieldset>
         <!-- Cluster Section -->
         <fieldset><legend><strong>Cluster</strong></legend>
