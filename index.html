@@ -156,7 +156,33 @@ beam_height: {{bh}}
         <fieldset><legend><strong>Worker Settings</strong></legend>
           <label>Number of Nodes: <input name="nodes" type="number" value="1"></label>
           <label>Number of Procs: <input name="procs" type="number" value="1"></label>
-          <label>Number of GPUs: <input name="gpus" type="number" min="0" value="0"></label>
+          <label style="display: flex; align-items: center; gap: 8px;">
+            Number of GPUs: <input name="gpus" type="number" min="0" value="0" id="gpusInput">
+            <label style="display: flex; align-items: center; gap: 3px; margin-bottom: 0; cursor: pointer; position: relative;">
+              <input type="checkbox" id="autoGpus"> Auto
+              <span id="autoGpusTooltip" style="
+                display: none;
+                position: absolute;
+                left: auto;
+                right: 0;
+                top: 120%;
+                z-index: 10;
+                background: #f6f8fa;
+                color: #222;
+                padding: 6px 10px;
+                border-radius: 6px;
+                border: 1px solid #bbb;
+                font-size: 10px;
+                width: 260px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+                white-space: pre-line;
+                pointer-events: none;
+              ">
+                Assign GPUs available to this worker.<br>
+                The number of processes / nodes are set to match.
+              </span>
+            </label>
+          </label>
         </fieldset>
         <!-- Cluster Section -->
         <fieldset><legend><strong>Cluster</strong></legend>
@@ -250,8 +276,9 @@ beam_height: {{bh}}
       const form = e.target, data = {};
       for (const [k,v] of new FormData(form).entries()) data[k]=v;
       const rawGpus = form.gpus.value.trim();
+      data.auto_gpus = document.getElementById('autoGpus').checked;
       data.num_gpus = rawGpus === "" ? 0 : parseInt(rawGpus);
-      data.gpus_line = data.num_gpus > 0 ? `num_gpus=${data.num_gpus},` : "";
+      data.gpus_line = (!data.auto_gpus && data.num_gpus > 0) ? `num_gpus=${data.num_gpus},` : "";
       // Cluster logic
       data.cluster_enabled = form.cluster_enable.checked;
       data.cluster_total_nodes = data.cluster_enabled ? form.cluster_total_nodes.value : null;
@@ -373,6 +400,10 @@ beam_height: {{bh}}
         f.elements["nodes"].value = "2";
         f.elements["procs"].value = "16";
         f.elements["gpus"].value = 0;
+        document.getElementById("autoGpus").checked = false;
+        document.getElementById("gpusInput").disabled = false;
+        document.querySelector('input[name="nodes"]').disabled = false;
+        document.querySelector('input[name="procs"]').disabled = false;
         const modSel = document.getElementById("gen_module");
         const funcSel = document.getElementById("gen_function");
         modSel.selectedIndex = 0;
@@ -478,6 +509,41 @@ beam_height: {{bh}}
         templatedCheckbox.addEventListener('blur', function() {
           tooltip.style.display = 'none';
         });
+      }
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+      // Auto GPU logic
+      const autoGpus = document.getElementById('autoGpus');
+      const gpusInput = document.getElementById('gpusInput');
+      const nodesInput = document.querySelector('input[name="nodes"]');
+      const procsInput = document.querySelector('input[name="procs"]');
+      const autoGpusTooltipLabel = autoGpus.parentElement;
+      const autoGpusTooltip = document.getElementById('autoGpusTooltip');
+      if (autoGpusTooltipLabel && autoGpusTooltip) {
+        autoGpusTooltipLabel.addEventListener('mouseenter', function() {
+          autoGpusTooltip.style.display = 'block';
+        });
+        autoGpusTooltipLabel.addEventListener('mouseleave', function() {
+          autoGpusTooltip.style.display = 'none';
+        });
+        autoGpus.addEventListener('focus', function() {
+          autoGpusTooltip.style.display = 'block';
+        });
+        autoGpus.addEventListener('blur', function() {
+          autoGpusTooltip.style.display = 'none';
+        });
+      }
+      function setResourceFieldsDisabled(disabled) {
+        gpusInput.disabled = disabled;
+        nodesInput.disabled = disabled;
+        procsInput.disabled = disabled;
+      }
+      if (autoGpus && gpusInput && nodesInput && procsInput) {
+        autoGpus.addEventListener('change', function() {
+          setResourceFieldsDisabled(this.checked);
+        });
+        // Set initial state on page load
+        setResourceFieldsDisabled(autoGpus.checked);
       }
     });
   </script>

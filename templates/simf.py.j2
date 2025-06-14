@@ -36,11 +36,17 @@ def run_{{ app_ref }}(H, persis_info, sim_specs, libE_info):
 
     # Submit our {{ app_ref }} app for execution.
     task = exctr.submit(app_name="{{ app_ref }}",
+                        {{#auto_gpus}}
+                        auto_assign_gpus=True,
+                        match_procs_to_gpus=True,
+                        {{/auto_gpus}}
+                        {{^auto_gpus}}
                         num_nodes={{nodes}},
                         num_procs={{procs}},
                         {{#num_gpus}}
                         num_gpus={{ num_gpus }},
                         {{/num_gpus}}
+                        {{/auto_gpus}}
                         )
 
     # Block until the task finishes
