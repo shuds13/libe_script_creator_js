@@ -54,9 +54,8 @@ def run_{{ app_ref }}(H, persis_info, sim_specs, libE_info):
     # Block until the task finishes
     task.wait(timeout)
 
+    # Read output and set the objective and the sim's status
     out_file = "{{ app_ref }}.stat"
-
-    # Try loading final results and set the sim's status
     try:
         data = np.loadtxt(out_file)
         f = data[-1]
