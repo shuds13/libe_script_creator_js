@@ -170,7 +170,7 @@ beam_height: {{bh}}
           </div>
         </fieldset>
         <fieldset><legend><strong>Worker Settings</strong></legend>
-          <label>Number of Nodes: <input name="nodes" type="number" value="1"></label>
+          <label>Number of Nodes: <input name="nodes" type="number" placeholder="Auto"></label>
           <label>Number of Procs: <input name="procs" type="number" value="1"></label>
           <label>Number of GPUs:</label>
           <div style="display: flex; align-items: center; gap: 8px;">
@@ -278,7 +278,15 @@ beam_height: {{bh}}
     document.getElementById('scriptForm').onsubmit = async function(e) {
       e.preventDefault();
       const form = e.target, data = {};
-      for (const [k,v] of new FormData(form).entries()) data[k]=v;
+      for (const [k,v] of new FormData(form).entries()) {
+        if (k === 'nodes') {
+          if (v.trim() !== '') {
+            data.nodes = parseInt(v, 10);
+          }
+        } else {
+          data[k] = v;
+        }
+      }
       const rawGpus = form.gpus.value.trim();
       data.auto_gpus = document.getElementById('autoGpus').checked;
       data.num_gpus = rawGpus === "" ? 0 : parseInt(rawGpus);
@@ -401,12 +409,11 @@ beam_height: {{bh}}
         f.elements["sim_app"].value = "/home/user/warpx.x";
         f.elements["input_path"].value = "/user/home/warpx_input";
         f.elements["max_sims"].value = "8";
-        f.elements["nodes"].value = "2";
+        f.elements["nodes"].value = "";
         f.elements["procs"].value = "16";
         f.elements["gpus"].value = 0;
         document.getElementById("autoGpus").checked = false;
         document.getElementById("gpusInput").disabled = false;
-        document.querySelector('input[name="nodes"]').disabled = false;
         document.querySelector('input[name="procs"]').disabled = false;
         const modSel = document.getElementById("gen_module");
         const funcSel = document.getElementById("gen_function");
@@ -424,6 +431,8 @@ beam_height: {{bh}}
         clusterEnable.addEventListener('change', function() {
           clusterFields.style.display = this.checked ? '' : 'none';
         });
+        // Set initial state on page load
+        clusterFields.style.display = clusterEnable.checked ? '' : 'none';
       }
     });
     // Template variables management

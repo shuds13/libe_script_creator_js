@@ -41,7 +41,9 @@ def run_{{ app_ref }}(H, persis_info, sim_specs, libE_info):
                         match_procs_to_gpus=True,
                         {{/auto_gpus}}
                         {{^auto_gpus}}
+                        {{#nodes}}
                         num_nodes={{nodes}},
+                        {{/nodes}}
                         num_procs={{procs}},
                         {{#num_gpus}}
                         num_gpus={{ num_gpus }},
