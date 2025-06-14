@@ -63,7 +63,7 @@ if __name__ == "__main__":
     ensemble.gen_specs = GenSpecs(
         gen_f=gen_f,
         inputs=[],
-        persis_in=["sim_id"],
+        persis_in=["sim_id", "f"],
         outputs=[("x", float, ({{ dimension }},))],
         user={
             "initial_batch_size": num_workers,
