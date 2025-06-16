@@ -255,6 +255,8 @@ beam_height: {{bh}}
       batch_slurm: 'templates/submit_slurm.sh.j2',
       batch_pbs: 'templates/submit_pbs.sh.j2'
     };
+    let generatorSpecs = {};
+    fetch("data/generator_specs.json").then(res => res.json()).then(data => { generatorSpecs = data; });
     async function fetchTemplates(clusterEnabled, schedulerType) {
       const ts = Date.now();
       const promises = [
@@ -313,6 +315,33 @@ beam_height: {{bh}}
           data[k] = v;
         }
       }
+      // --- Custom gen_specs logic ---
+      const genModule = (data.gen_module || '').toLowerCase().trim();
+      const genFunc = (data.gen_function || '').toLowerCase().trim();
+      const combinedKey = genModule + '.' + genFunc;
+      let customSpec = null;
+      // Try direct match (case-insensitive, trimmed)
+      for (const key in generatorSpecs) {
+        if (key.toLowerCase().trim() === combinedKey) {
+          customSpec = generatorSpecs[key];
+          break;
+        }
+      }
+      // Pretty-print GenSpecs arguments for Python
+
+      let customGenSpecsStr = null;
+      if (customSpec) {
+        if (typeof customSpec === 'string') {
+          customGenSpecsStr = customSpec;
+        } else {
+          customGenSpecsStr = prettyPrintPythonArgs(customSpec);
+        }
+      }
+      data.custom_gen_specs = customGenSpecsStr || null;
+      console.log('Selected gen_module:', data.gen_module);
+      console.log('Selected gen_function:', data.gen_function);
+      console.log('Custom gen_specs:', data.custom_gen_specs);
+      // --- End custom gen_specs logic ---
       const rawGpus = form.gpus.value.trim();
       data.auto_gpus = document.getElementById('autoGpus').checked;
       data.num_gpus = rawGpus === "" ? 0 : parseInt(rawGpus);

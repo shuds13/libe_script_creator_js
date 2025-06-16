@@ -60,6 +60,12 @@ if __name__ == "__main__":
         {{/has_template_vars}}
     )
 
+    {{#custom_gen_specs}}
+    ensemble.gen_specs = GenSpecs(
+{{{ custom_gen_specs }}}
+    )
+    {{/custom_gen_specs}}
+    {{^custom_gen_specs}}
     ensemble.gen_specs = GenSpecs(
         gen_f=gen_f,
         inputs=[],
@@ -71,6 +77,7 @@ if __name__ == "__main__":
             "ub": {{ ub_array }},
         },
     )
+    {{/custom_gen_specs}}
 
     ensemble.alloc_specs = AllocSpecs(
         alloc_f=alloc_f,
