@@ -3,6 +3,7 @@ import jinja2
 # Optional status codes to display in libE_stats.txt for each gen or sim
 from libensemble.message_numbers import TASK_FAILED, WORKER_DONE
 
+{{{ set_objective_code }}}
 
 def set_input_file_params(H, sim_specs, ints=False):
     """
@@ -55,15 +56,7 @@ def run_{{ app_ref }}(H, persis_info, sim_specs, libE_info):
     task.wait(timeout)
 
     # Read output and set the objective and the sim's status
-    out_file = "{{ app_ref }}.stat"
-    try:
-        data = np.loadtxt(out_file)
-        f = data[-1]
-        calc_status = WORKER_DONE
-    except Exception:
-        f = np.nan
-        calc_status = TASK_FAILED
-
+    f, calc_status = set_objective()
     outspecs = sim_specs["out"]
     output = np.zeros(1, dtype=outspecs)
     output["f"][0] = f

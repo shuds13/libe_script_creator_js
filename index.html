@@ -92,7 +92,7 @@
           <label>Application Reference Name: <input name="app_ref" required></label>
         </fieldset>
         <fieldset><legend><strong>Manager Settings</strong></legend>
-          <label>Dimension (number of parameters): <input name="dimension" type="number" min="1" value="1" required></label>
+          <label>Dimension (number of parameters): <input name="dimension" type="number" min="1" value="2" required></label>
           <label>Max Simulations: <input name="max_sims" type="number"></label>
           <label>MPI App Full Path: <input name="sim_app" required></label>
           <div style="margin-bottom: 8px;">
@@ -200,6 +200,20 @@ beam_height: {{bh}}
               </span>
             </label>
           </div>
+          <fieldset style="margin-top:12px;">
+            <legend><strong>Output Parsing</strong></legend>
+            <label class="checkbox-label">
+              <input type="checkbox" id="customSetObjective" name="custom_set_objective">
+              Customize <code>set_objective()</code> function
+            </label>
+            <div id="setObjectiveEditorContainer" style="display:none; margin-top:8px;">
+              <label>
+                <code>set_objective()</code> function (Python):
+                <textarea id="setObjectiveEditor" name="set_objective_code" rows="8" style="width:100%;font-family:monospace;"></textarea>
+              </label>
+              <small>Advanced: Edit how the simulation output is parsed and the objective is set.</small>
+            </div>
+          </fieldset>
         </fieldset>
       </div>
     </div>
@@ -278,6 +292,18 @@ beam_height: {{bh}}
     document.getElementById('scriptForm').onsubmit = async function(e) {
       e.preventDefault();
       const form = e.target, data = {};
+      // --- Ensure set_objective_code is never empty if customizing ---
+      const customSetObjective = document.getElementById('customSetObjective').checked;
+      const setObjectiveEditor = document.getElementById('setObjectiveEditor');
+      if (customSetObjective && setObjectiveEditor.value.trim() === '') {
+        // Build data object for default code
+        const tempData = {};
+        for (const [k,v] of new FormData(form).entries()) {
+          tempData[k] = v;
+        }
+        setObjectiveEditor.value = getDefaultSetObjectiveCode(tempData);
+      }
+      // --- End ensure ---
       for (const [k,v] of new FormData(form).entries()) {
         if (k === 'nodes') {
           if (v.trim() !== '') {
@@ -334,10 +360,17 @@ beam_height: {{bh}}
       
       data.dimension = parseInt(form.dimension.value);
       // Generate lb and ub arrays as strings for the template
-      data.lb_array = 'np.array([' + Array(data.dimension).fill(1000).join(', ') + '])';
-      data.ub_array = 'np.array([' + Array(data.dimension).fill(3000).join(', ') + '])';
+      data.lb_array = 'np.array([' + Array(data.dimension).fill(0.0).join(', ') + '])';
+      data.ub_array = 'np.array([' + Array(data.dimension).fill(3.0).join(', ') + '])';
       
-      const { runTpl, simfTpl, batchTpl } = await fetchTemplates(data.cluster_enabled, data.scheduler_type); 
+      // Output Parsing: set_objective
+      if (document.getElementById('customSetObjective').checked) {
+        data.set_objective_code = document.getElementById('setObjectiveEditor').value;
+      } else {
+        data.set_objective_code = getDefaultSetObjectiveCode(data);
+      }
+      
+      const { runTpl, simfTpl, batchTpl } = await fetchTemplates(data.cluster_enabled, data.scheduler_type);
       Mustache.escape=text=>text;
       const runRendered = Mustache.render(runTpl,data);
       const simfRendered = Mustache.render(simfTpl,data);
@@ -401,6 +434,72 @@ beam_height: {{bh}}
       document.addEventListener('DOMContentLoaded', setupCopyIcons);
       // Also re-setup copy icons after scripts are generated (in case of rerender)
       setupCopyIcons();
+      // --- Output Parsing Custom set_objective() logic ---
+      let isCustomSetObjective = false;
+      let lastDefaultSetObjectiveCode = '';
+
+      function getDefaultSetObjectiveCode(data) {
+        return `def set_objective(out_file=\"${data.app_ref || ''}.stat\"):\n    try:\n        data = np.loadtxt(out_file)\n        return data[-1], WORKER_DONE\n    except Exception:\n        return np.nan, TASK_FAILED`;
+      }
+
+      function updateSetObjectiveEditor(defaultCode) {
+        const editor = document.getElementById('setObjectiveEditor');
+        if (editor.value.trim() === '') {
+          editor.value = defaultCode;
+        }
+        lastDefaultSetObjectiveCode = defaultCode;
+      }
+
+      function setCustomizeEditorVisibility() {
+        isCustomSetObjective = document.getElementById('customSetObjective').checked;
+        const container = document.getElementById('setObjectiveEditorContainer');
+        const editor = document.getElementById('setObjectiveEditor');
+        if (isCustomSetObjective) {
+          container.style.display = '';
+          // Pre-fill with default code if empty
+          const form = document.getElementById('scriptForm');
+          const data = {};
+          for (const [k,v] of new FormData(form).entries()) {
+            data[k] = v;
+          }
+          const defaultCode = getDefaultSetObjectiveCode(data);
+          if (editor.value.trim() === '') {
+            editor.value = defaultCode;
+          }
+          editor.disabled = false;
+        } else {
+          container.style.display = 'none';
+        }
+      }
+
+      document.getElementById('customSetObjective').addEventListener('change', function() {
+        setCustomizeEditorVisibility();
+      });
+      // Ensure visibility is set immediately after attaching the event listener
+      setCustomizeEditorVisibility();
+
+      // On form changes, update the set_objective code if customizing and the box is empty
+      function updateSetObjectiveFromForm() {
+        if (!isCustomSetObjective) return;
+        const form = document.getElementById('scriptForm');
+        const data = {};
+        for (const [k,v] of new FormData(form).entries()) {
+          data[k] = v;
+        }
+        const defaultCode = getDefaultSetObjectiveCode(data);
+        updateSetObjectiveEditor(defaultCode);
+      }
+
+      // Initial set on DOMContentLoaded
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          setCustomizeEditorVisibility();
+          updateSetObjectiveFromForm();
+        });
+      } else {
+        setCustomizeEditorVisibility();
+        updateSetObjectiveFromForm();
+      }
     };
     document.getElementById("fillBtn").onclick = function() {
         const f = document.forms[0];
