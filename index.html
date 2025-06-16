@@ -439,7 +439,7 @@ beam_height: {{bh}}
       let lastDefaultSetObjectiveCode = '';
 
       function getDefaultSetObjectiveCode(data) {
-        return `def set_objective(out_file=\"${data.app_ref || ''}.stat\"):\n    try:\n        data = np.loadtxt(out_file)\n        return data[-1]\n    except Exception:\n        return np.nan`;
+        return `def set_objective():\n    try:\n        data = np.loadtxt(\"${data.app_ref || ''}.stat\")\n        return data[-1]\n    except Exception:\n        return np.nan`;
       }
 
       function updateSetObjectiveEditor(defaultCode) {
