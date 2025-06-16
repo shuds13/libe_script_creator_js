@@ -55,8 +55,14 @@ def run_{{ app_ref }}(H, persis_info, sim_specs, libE_info):
     # Block until the task finishes
     task.wait(timeout)
 
-    # Read output and set the objective and the sim's status
-    f, calc_status = set_objective()
+    # Read output and set the objective
+    f = set_objective()
+
+    # Optionally set the sim's status to show in the libE_stats.txt file
+    if np.isnan(f):
+        calc_status = TASK_FAILED
+    else:
+        calc_status = WORKER_DONE
     outspecs = sim_specs["out"]
     output = np.zeros(1, dtype=outspecs)
     output["f"][0] = f
