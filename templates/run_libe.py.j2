@@ -22,8 +22,6 @@ if __name__ == "__main__":
 
     num_workers = {{ num_workers }}
 
-    ensemble = Ensemble(nworkers=num_workers, executor=exctr)
-
     {{#input_file}}
     input_file = "{{ input_file }}"
     {{/input_file}}
@@ -32,7 +30,8 @@ if __name__ == "__main__":
     sim_input_dir = "{{ sim_input_dir }}"
     {{/sim_input_dir}}
 
-    ensemble.libE_specs = LibeSpecs(
+    libE_specs = LibeSpecs(
+        nworkers=num_workers,
         gen_on_manager=True,
         sim_dirs_make=True,
         {{#input_file}}
@@ -43,7 +42,7 @@ if __name__ == "__main__":
         {{/sim_input_dir}}
     )
 
-    ensemble.sim_specs = SimSpecs(
+    sim_specs = SimSpecs(
         sim_f=run_{{ app_ref }},
         inputs=["x"],
         outputs=[("f", float)],
@@ -67,7 +66,7 @@ if __name__ == "__main__":
     )
     {{/custom_gen_specs}}
     {{^custom_gen_specs}}
-    ensemble.gen_specs = GenSpecs(
+    gen_specs = GenSpecs(
         gen_f=gen_f,
         inputs=[],
         persis_in=["sim_id", "f"],
@@ -80,12 +79,21 @@ if __name__ == "__main__":
     )
     {{/custom_gen_specs}}
 
-    ensemble.alloc_specs = AllocSpecs(
+    alloc_specs = AllocSpecs(
         alloc_f=alloc_f,
         {{ alloc_specs_user }}
     )
 
-    ensemble.exit_criteria = ExitCriteria(sim_max={{ max_sims }})
+    exit_criteria = ExitCriteria(sim_max={{ max_sims }})
+
+    ensemble = Ensemble(
+        libE_specs=libE_specs,
+        gen_specs=gen_specs,
+        sim_specs=sim_specs,
+        alloc_specs=alloc_specs,
+        exit_criteria=exit_criteria,
+        executor=exctr
+    )
 
     ensemble.add_random_streams()
     H, persis_info, flag = ensemble.run()
