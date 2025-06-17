@@ -84,7 +84,26 @@
 </head>
 <body>
   <h2>Generate libEnsemble Run Scripts</h2>
-  <button id="fillBtn" type="button">Fill with Sample Data</button>
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+    <button id="fillBtn" type="button">Fill with Sample Data</button>
+    <!-- Subtle Load/Save dropdown -->
+    <div id="devLoadSaveDropdown" style="position: relative;">
+      <button id="devLoadSaveBtn" type="button" style="font-size: 11px; padding: 2px 10px; opacity: 0.7;">Load/Save &#x25BC;</button>
+      <div id="devLoadSaveMenu" style="display: none; position: absolute; right: 0; top: 120%; background: #f6f8fa; border: 1px solid #bbb; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); padding: 8px 10px; min-width: 180px; z-index: 100; font-size: 11px;">
+        <div style="font-size: 11px; color: #666; font-weight: bold; margin-bottom: 4px;">Load/save form entries</div>
+        <div style="margin-bottom: 6px;">
+          <select id="savedEntriesDropdown" style="width: 100%; font-size: 11px;">
+            <option value="">-- Select Saved Entry --</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 4px;">
+          <button id="saveEntryBtn" type="button" style="font-size: 11px; padding: 2px 6px;">Save</button>
+          <button id="loadEntryBtn" type="button" style="font-size: 11px; padding: 2px 6px;">Load</button>
+          <button id="deleteEntryBtn" type="button" style="font-size: 11px; padding: 2px 6px;">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <form id="scriptForm">
     <div class="form-columns">
       <div class="form-column">
@@ -709,6 +728,122 @@ beam_height: {{bh}}
         setResourceFieldsDisabled(autoGpus.checked);
       }
     });
+    // --- Subtle Load/Save dropdown logic ---
+    (function() {
+      const btn = document.getElementById('devLoadSaveBtn');
+      const menu = document.getElementById('devLoadSaveMenu');
+      let menuOpen = false;
+      btn.onclick = function(e) {
+        e.stopPropagation();
+        menu.style.display = menuOpen ? 'none' : 'block';
+        menuOpen = !menuOpen;
+      };
+      // Hide menu when clicking outside
+      document.addEventListener('click', function(e) {
+        if (menuOpen && !menu.contains(e.target) && e.target !== btn) {
+          menu.style.display = 'none';
+          menuOpen = false;
+        }
+      });
+    })();
+    // --- Save/Load/Delete Entry logic ---
+    function getSavedEntryNames() {
+      return Object.keys(localStorage)
+        .filter(k => k.startsWith('libeFormData:'))
+        .map(k => k.replace('libeFormData:', ''));
+    }
+    function updateSavedEntriesDropdown() {
+      const dropdown = document.getElementById('savedEntriesDropdown');
+      const names = getSavedEntryNames();
+      dropdown.innerHTML = '<option value="">-- Select Saved Entry --</option>' +
+        names.map(name => `<option value="${name}">${name}</option>`).join('');
+    }
+    function saveFormData() {
+      const name = prompt('Enter a name for this save:');
+      if (!name) return;
+      const form = document.getElementById('scriptForm');
+      const data = {};
+      for (const [k, v] of new FormData(form).entries()) {
+        data[k] = v;
+      }
+      // Save checkbox/radio states
+      form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        data[cb.name] = cb.checked;
+      });
+      form.querySelectorAll('input[type="radio"]:checked').forEach(rb => {
+        data[rb.name] = rb.value;
+      });
+      // Save template vars
+      const templateVarInputs = form.querySelectorAll('input[name="template_var"]');
+      data.template_vars = Array.from(templateVarInputs).map(input => input.value);
+      // Save set_objective_code
+      const setObj = document.getElementById('setObjectiveEditor');
+      if (setObj) data.set_objective_code = setObj.value;
+      localStorage.setItem('libeFormData:' + name, JSON.stringify(data));
+      updateSavedEntriesDropdown();
+      alert('Saved as "' + name + '"');
+    }
+    function loadFormData() {
+      const dropdown = document.getElementById('savedEntriesDropdown');
+      const name = dropdown.value;
+      if (!name) { alert('Select a saved entry to load.'); return; }
+      const data = JSON.parse(localStorage.getItem('libeFormData:' + name) || '{}');
+      const form = document.getElementById('scriptForm');
+      for (const [k, v] of Object.entries(data)) {
+        if (form.elements[k]) {
+          if (form.elements[k].type === 'checkbox') {
+            form.elements[k].checked = !!v;
+          } else if (form.elements[k].type === 'radio') {
+            const radios = form.querySelectorAll(`input[name="${k}"]`);
+            radios.forEach(rb => { rb.checked = (rb.value === v); });
+          } else {
+            form.elements[k].value = v;
+          }
+        }
+      }
+      // Restore template vars
+      if (Array.isArray(data.template_vars)) {
+        const container = document.getElementById('templateVars');
+        container.innerHTML = '';
+        data.template_vars.forEach((val, idx) => {
+          const row = document.createElement('div');
+          row.className = 'template-var-row';
+          row.innerHTML = `<input name="template_var" placeholder="variable name" style="width: 200px; display: inline-block;" value="${val}">`;
+          container.appendChild(row);
+        });
+        // Always at least one row
+        if (data.template_vars.length === 0) {
+          const row = document.createElement('div');
+          row.className = 'template-var-row';
+          row.innerHTML = `<input name="template_var" placeholder="variable name" style="width: 200px; display: inline-block;">`;
+          container.appendChild(row);
+        }
+        // Re-setup add/remove buttons
+        if (typeof setupTemplateVarButtons === 'function') setupTemplateVarButtons();
+      }
+      // Restore set_objective_code
+      if (data.set_objective_code && document.getElementById('setObjectiveEditor')) {
+        document.getElementById('setObjectiveEditor').value = data.set_objective_code;
+      }
+      // Trigger change events for UI logic
+      document.querySelectorAll('input, select').forEach(el => {
+        if (typeof el.onchange === 'function') el.onchange();
+      });
+      alert('Loaded "' + name + '"');
+    }
+    function deleteFormData() {
+      const dropdown = document.getElementById('savedEntriesDropdown');
+      const name = dropdown.value;
+      if (!name) { alert('Select a saved entry to delete.'); return; }
+      if (!confirm('Delete saved entry "' + name + '"?')) return;
+      localStorage.removeItem('libeFormData:' + name);
+      updateSavedEntriesDropdown();
+      alert('Deleted "' + name + '"');
+    }
+    document.getElementById('saveEntryBtn').onclick = saveFormData;
+    document.getElementById('loadEntryBtn').onclick = loadFormData;
+    document.getElementById('deleteEntryBtn').onclick = deleteFormData;
+    document.addEventListener('DOMContentLoaded', updateSavedEntriesDropdown);
   </script>
 </body>
 </html>
