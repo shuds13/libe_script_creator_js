@@ -5,7 +5,7 @@ import numpy as np
 from simf import run_app
 
 from libensemble import Ensemble
-from libensemble.alloc_funcs.start_only_persistent import only_persistent_gens as alloc_f
+from libensemble.alloc_funcs.{{ alloc_module }} import {{ alloc_function }} as alloc_f
 from libensemble.executors import MPIExecutor
 from libensemble.gen_funcs.{{ gen_module }} import {{ gen_function }} as gen_f
 from libensemble.specs import AllocSpecs, ExitCriteria, GenSpecs, LibeSpecs, SimSpecs
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     ensemble.alloc_specs = AllocSpecs(
         alloc_f=alloc_f,
-        user={"async_return": False},
+        {{ alloc_specs_user }}
     )
 
     ensemble.exit_criteria = ExitCriteria(sim_max={{ max_sims }})

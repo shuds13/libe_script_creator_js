@@ -257,6 +257,18 @@ beam_height: {{bh}}
     };
     let generatorSpecs = {};
     fetch("data/generator_specs.json").then(res => res.json()).then(data => { generatorSpecs = data; });
+    const GEN_TO_ALLOC = {
+      "aposmm": {
+        alloc_module: "persistent_aposmm_alloc",
+        alloc_function: "persistent_aposmm_alloc",
+        alloc_specs_user: ""
+      },
+      "default": {
+        alloc_module: "start_only_persistent",
+        alloc_function: "only_persistent_gens",
+        alloc_specs_user: 'user={"async_return": False},'
+      }
+    };
     async function fetchTemplates(clusterEnabled, schedulerType) {
       const ts = Date.now();
       const promises = [
@@ -398,6 +410,16 @@ beam_height: {{bh}}
       } else {
         data.set_objective_code = getDefaultSetObjectiveCode(data);
       }
+      
+      let allocInfo;
+      if (data.gen_function && data.gen_function.toLowerCase().includes("aposmm")) {
+        allocInfo = GEN_TO_ALLOC["aposmm"];
+      } else {
+        allocInfo = GEN_TO_ALLOC["default"];
+      }
+      data.alloc_module = allocInfo.alloc_module;
+      data.alloc_function = allocInfo.alloc_function;
+      data.alloc_specs_user = allocInfo.alloc_specs_user;
       
       const { runTpl, simfTpl, batchTpl } = await fetchTemplates(data.cluster_enabled, data.scheduler_type);
       Mustache.escape=text=>text;
