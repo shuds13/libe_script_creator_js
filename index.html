@@ -188,7 +188,7 @@ beam_height: {{bh}}
             </label>
           </div>
         </fieldset>
-        <fieldset><legend><strong>Worker Settings</strong></legend>
+        <fieldset><legend><strong>Worker Settings (for each simulation)</strong></legend>
           <label>Number of Nodes: <input name="nodes" type="number" placeholder="Auto"></label>
           <label>Number of Procs: <input name="procs" type="number" value="1"></label>
           <label>Number of GPUs:</label>
@@ -223,11 +223,11 @@ beam_height: {{bh}}
             <legend><strong>Output Parsing</strong></legend>
             <label class="checkbox-label">
               <input type="checkbox" id="customSetObjective" name="custom_set_objective">
-              Customize <code>set_objective()</code> function
+              Customize <code>set_objective_value()</code> function
             </label>
             <div id="setObjectiveEditorContainer" style="display:none; margin-top:8px;">
               <label>
-                <code>set_objective()</code> function (Python):
+                <code>set_objective_value()</code> function (Python):
                 <textarea id="setObjectiveEditor" name="set_objective_code" rows="8" style="width:100%;font-family:monospace;"></textarea>
               </label>
               <small>Advanced: Edit how the simulation output is parsed and the objective is set.</small>
@@ -504,12 +504,12 @@ beam_height: {{bh}}
       document.addEventListener('DOMContentLoaded', setupCopyIcons);
       // Also re-setup copy icons after scripts are generated (in case of rerender)
       setupCopyIcons();
-      // --- Output Parsing Custom set_objective() logic ---
+      // --- Output Parsing Custom set_objective_value() logic ---
       let isCustomSetObjective = false;
       let lastDefaultSetObjectiveCode = '';
 
       function getDefaultSetObjectiveCode(data) {
-        return `def set_objective():\n    try:\n        data = np.loadtxt(\"${data.app_ref || ''}.stat\")\n        return data[-1]\n    except Exception:\n        return np.nan`;
+        return `def set_objective_value():\n    try:\n        data = np.loadtxt(\"${data.app_ref || ''}.stat\")\n        return data[-1]\n    except Exception:\n        return np.nan`;
       }
 
       function updateSetObjectiveEditor(defaultCode) {
@@ -579,7 +579,7 @@ beam_height: {{bh}}
         f.elements["input_path"].value = "/user/home/warpx_input";
         f.elements["max_sims"].value = "8";
         f.elements["nodes"].value = "";
-        f.elements["procs"].value = "16";
+        f.elements["procs"].value = "8";
         f.elements["gpus"].value = 0;
         document.getElementById("autoGpus").checked = false;
         document.getElementById("gpusInput").disabled = false;

@@ -56,7 +56,7 @@ def run_{{ app_ref }}(H, persis_info, sim_specs, libE_info):
     task.wait()
 
     # Read output and set the objective
-    f = set_objective()
+    f = set_objective_value()
 
     # Optionally set the sim's status to show in the libE_stats.txt file
     if np.isnan(f):
