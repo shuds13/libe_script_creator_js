@@ -53,7 +53,7 @@ def run_{{ app_ref }}(H, persis_info, sim_specs, libE_info):
                         )
 
     # Block until the task finishes
-    task.wait(timeout)
+    task.wait()
 
     # Read output and set the objective
     f = set_objective()
