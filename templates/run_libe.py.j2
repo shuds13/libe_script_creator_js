@@ -60,6 +60,7 @@ if __name__ == "__main__":
         {{/has_template_vars}}
     )
 
+    n = {{ dimension }}
     {{#custom_gen_specs}}
     ensemble.gen_specs = GenSpecs(
 {{{ custom_gen_specs }}}
