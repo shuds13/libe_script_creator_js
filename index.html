@@ -210,9 +210,8 @@ beam_height: {{bh}}
             <label>Number of Nodes: <input class="short-number" name="nodes" type="number" placeholder="Auto"></label>
             <label>Number of Procs: <input class="short-number" name="procs" type="number" min="1" value="1"></label>
           </div>
-          <label>Number of GPUs:</label>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <input name="gpus" type="number" min="0" value="0" id="gpusInput">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <label style="margin-bottom: 0; margin-right: 8px;">Number of GPUs: <input class="short-number" name="gpus" type="number" min="0" value="0" id="gpusInput"></label>
             <label class="checkbox-label" style="margin-bottom: 0; cursor: pointer; position: relative; display: flex; align-items: center; gap: 3px;">
               <input type="checkbox" id="autoGpus"> Auto
               <span id="autoGpusTooltip" style="
