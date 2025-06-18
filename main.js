@@ -57,6 +57,49 @@ function setupTemplateVarButtons() {
   });
 }
 
+// Global UI update functions
+function updateInputLabels() {
+  const inputPathLabelText = document.getElementById('inputPathLabelText');
+  const templatedFileLabel = document.getElementById('templatedFileLabel');
+  if (!inputPathLabelText || !templatedFileLabel) return;
+  
+  const isDirectory = document.querySelector('input[name="input_type"]:checked')?.value === 'directory';
+  inputPathLabelText.textContent = isDirectory ? 'Input Directory:' : 'Input File Path:';
+  // Only show Template Filename if both Directory and Templated are selected
+  const templatedChecked = document.getElementById('templatedEnable')?.checked;
+  templatedFileLabel.style.display = (isDirectory && templatedChecked) ? '' : 'none';
+}
+
+function updateTemplatedFieldsVisibility() {
+  const templatedEnable = document.getElementById('templatedEnable');
+  const templatedFields = document.getElementById('templatedFields');
+  if (templatedEnable && templatedFields) {
+    templatedFields.style.display = templatedEnable.checked ? '' : 'none';
+  }
+}
+
+function updateClusterFieldsVisibility() {
+  const clusterEnable = document.getElementById('clusterEnable');
+  const clusterFields = document.getElementById('clusterFields');
+  if (clusterEnable && clusterFields) {
+    clusterFields.style.display = clusterEnable.checked ? '' : 'none';
+  }
+}
+
+function updateAutoGpusState() {
+  const autoGpus = document.getElementById('autoGpus');
+  const gpusInput = document.getElementById('gpusInput');
+  const nodesInput = document.querySelector('input[name="nodes"]');
+  const procsInput = document.querySelector('input[name="procs"]');
+  
+  if (autoGpus && gpusInput && nodesInput && procsInput) {
+    const disabled = autoGpus.checked;
+    gpusInput.disabled = disabled;
+    nodesInput.disabled = disabled;
+    procsInput.disabled = disabled;
+  }
+}
+
 async function fetchTemplates(clusterEnabled, schedulerType) {
   const ts = Date.now();
   const promises = [
@@ -359,41 +402,33 @@ document.getElementById("fillBtn").onclick = function() {
 // Cluster section show/hide logic
 document.addEventListener('DOMContentLoaded', function() {
   const clusterEnable = document.getElementById('clusterEnable');
-  const clusterFields = document.getElementById('clusterFields');
   if (clusterEnable) {
     clusterEnable.addEventListener('change', function() {
-      clusterFields.style.display = this.checked ? '' : 'none';
+      updateClusterFieldsVisibility();
     });
     // Set initial state on page load
-    clusterFields.style.display = clusterEnable.checked ? '' : 'none';
+    updateClusterFieldsVisibility();
   }
 });
 // Template variables management
 document.addEventListener('DOMContentLoaded', function() {
   // Input type change handler
   const inputTypeRadios = document.querySelectorAll('input[name="input_type"]');
-  const inputPathLabelText = document.getElementById('inputPathLabelText');
-  const templatedFileLabel = document.getElementById('templatedFileLabel');
-  
-  function updateInputLabels() {
-    const isDirectory = document.querySelector('input[name="input_type"]:checked').value === 'directory';
-    inputPathLabelText.textContent = isDirectory ? 'Input Directory:' : 'Input File Path:';
-    // Only show Template Filename if both Directory and Templated are selected
-    const templatedChecked = document.getElementById('templatedEnable').checked;
-    templatedFileLabel.style.display = (isDirectory && templatedChecked) ? '' : 'none';
-  }
   
   inputTypeRadios.forEach(radio => {
-    radio.addEventListener('change', updateInputLabels);
+    radio.addEventListener('change', function() {
+      updateInputLabels();
+    });
   });
   
   // Templated checkbox handler
   const templatedEnable = document.getElementById('templatedEnable');
-  const templatedFields = document.getElementById('templatedFields');
-  templatedEnable.addEventListener('change', function() {
-    templatedFields.style.display = this.checked ? '' : 'none';
-    updateInputLabels(); // Also update template file label visibility
-  });
+  if (templatedEnable) {
+    templatedEnable.addEventListener('change', function() {
+      updateTemplatedFieldsVisibility();
+      updateInputLabels(); // Also update template file label visibility
+    });
+  }
   
   // Template variable add/remove functionality
   setupTemplateVarButtons();
@@ -422,11 +457,9 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
   // Auto GPU logic
   const autoGpus = document.getElementById('autoGpus');
-  const gpusInput = document.getElementById('gpusInput');
-  const nodesInput = document.querySelector('input[name="nodes"]');
-  const procsInput = document.querySelector('input[name="procs"]');
-  const autoGpusTooltipLabel = autoGpus.parentElement;
+  const autoGpusTooltipLabel = autoGpus?.parentElement;
   const autoGpusTooltip = document.getElementById('autoGpusTooltip');
+  
   if (autoGpusTooltipLabel && autoGpusTooltip) {
     autoGpusTooltipLabel.addEventListener('mouseenter', function() {
       autoGpusTooltip.style.display = 'block';
@@ -441,17 +474,13 @@ document.addEventListener('DOMContentLoaded', function() {
       autoGpusTooltip.style.display = 'none';
     });
   }
-  function setResourceFieldsDisabled(disabled) {
-    gpusInput.disabled = disabled;
-    nodesInput.disabled = disabled;
-    procsInput.disabled = disabled;
-  }
-  if (autoGpus && gpusInput && nodesInput && procsInput) {
+  
+  if (autoGpus) {
     autoGpus.addEventListener('change', function() {
-      setResourceFieldsDisabled(this.checked);
+      updateAutoGpusState();
     });
     // Set initial state on page load
-    setResourceFieldsDisabled(autoGpus.checked);
+    updateAutoGpusState();
   }
 });
 // --- Subtle Load/Save dropdown logic ---
@@ -549,22 +578,15 @@ function loadFormData() {
   if (data.set_objective_code && document.getElementById('setObjectiveEditor')) {
     document.getElementById('setObjectiveEditor').value = data.set_objective_code;
   }
-  // Ensure templated fields are shown if templated_enable is true
-  const templatedEnable = document.getElementById('templatedEnable');
-  const templatedFields = document.getElementById('templatedFields');
-  if (templatedEnable && templatedFields) {
-    if (templatedEnable.checked) {
-      templatedFields.style.display = '';
-    } else {
-      templatedFields.style.display = 'none';
-    }
-  }
-  // Trigger change events for UI logic
-  document.querySelectorAll('input, select').forEach(el => {
-    if (typeof el.onchange === 'function') el.onchange();
-  });
-  alert('Loaded "' + name + '"');
+  
+  // Update all UI field visibility based on loaded values
+  updateTemplatedFieldsVisibility();
+  updateInputLabels();
+  updateClusterFieldsVisibility();
+  updateAutoGpusState();
   setupTemplateVarButtons();
+  
+  alert('Loaded "' + name + '"');
 }
 function deleteFormData() {
   const dropdown = document.getElementById('savedEntriesDropdown');
