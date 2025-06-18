@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     n = {{ dimension }}
     {{#custom_gen_specs}}
-    ensemble.gen_specs = GenSpecs(
+    gen_specs = GenSpecs(
 {{{ custom_gen_specs }}}
     )
     {{/custom_gen_specs}}
@@ -101,3 +101,5 @@ if __name__ == "__main__":
     if ensemble.is_manager:
         print("First 3:", ensemble.H[['x', 'f']][:3])
         print("Last 3:", ensemble.H[['x', 'f']][-3:])
+        ensemble.save_output(__file__)
+

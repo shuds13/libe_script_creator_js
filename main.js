@@ -98,7 +98,7 @@ document.getElementById('scriptForm').onsubmit = async function(e) {
       customGenSpecsStr = prettyPrintPythonArgs(customSpec);
     }
   }
-  data.custom_gen_specs = customGenSpecsStr || null;
+  data.custom_gen_specs = customGenSpecsStr ? Mustache.render(customGenSpecsStr, data) : null;
   console.log('Selected gen_module:', data.gen_module);
   console.log('Selected gen_function:', data.gen_function);
   console.log('Custom gen_specs:', data.custom_gen_specs);
