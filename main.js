@@ -100,6 +100,13 @@ function updateAutoGpusState() {
   }
 }
 
+function updateGeneratorDropdowns() {
+  const modSel = document.getElementById("gen_module");
+  if (modSel && modSel.onchange) {
+    modSel.onchange();
+  }
+}
+
 async function fetchTemplates(clusterEnabled, schedulerType) {
   const ts = Date.now();
   const promises = [
@@ -577,6 +584,19 @@ function loadFormData() {
   // Restore set_objective_code
   if (data.set_objective_code && document.getElementById('setObjectiveEditor')) {
     document.getElementById('setObjectiveEditor').value = data.set_objective_code;
+  }
+  
+  // Update generator dropdowns to populate function options based on selected module
+  updateGeneratorDropdowns();
+  
+  // If we have saved gen_function, set it after the dropdown is populated
+  if (data.gen_function) {
+    setTimeout(() => {
+      const funcSel = document.getElementById('gen_function');
+      if (funcSel) {
+        funcSel.value = data.gen_function;
+      }
+    }, 10);
   }
   
   // Update all UI field visibility based on loaded values
