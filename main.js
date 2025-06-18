@@ -18,6 +18,45 @@ const GEN_TO_ALLOC = {
     alloc_specs_user: 'user={"async_return": False},'
   }
 };
+
+// Move setupTemplateVarButtons to global scope
+function setupTemplateVarButtons() {
+  document.querySelectorAll('.template-var-row').forEach((row, idx, rows) => {
+    // Remove all buttons
+    row.querySelectorAll('button').forEach(btn => btn.remove());
+    // Add + to last row only
+    if (idx === rows.length - 1) {
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'add-var-btn';
+      addBtn.style.marginLeft = '5px';
+      addBtn.textContent = '+';
+      addBtn.onclick = function() {
+        const container = document.getElementById('templateVars');
+        const newRow = document.createElement('div');
+        newRow.className = 'template-var-row';
+        newRow.innerHTML = `<input name="template_var" placeholder="variable name" style="width: 200px; display: inline-block;">`;
+        container.appendChild(newRow);
+        setupTemplateVarButtons();
+      };
+      row.appendChild(addBtn);
+    }
+    // Add - to all rows except the first
+    if (rows.length > 1 && idx > 0) {
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'remove-var-btn';
+      removeBtn.style.marginLeft = '5px';
+      removeBtn.textContent = '-';
+      removeBtn.onclick = function() {
+        row.remove();
+        setupTemplateVarButtons();
+      };
+      row.appendChild(removeBtn);
+    }
+  });
+}
+
 async function fetchTemplates(clusterEnabled, schedulerType) {
   const ts = Date.now();
   const promises = [
@@ -103,9 +142,6 @@ document.getElementById('scriptForm').onsubmit = async function(e) {
     }
   }
   data.custom_gen_specs = customGenSpecsStr ? Mustache.render(customGenSpecsStr, data) : null;
-  console.log('Selected gen_module:', data.gen_module);
-  console.log('Selected gen_function:', data.gen_function);
-  console.log('Custom gen_specs:', data.custom_gen_specs);
   // --- End custom gen_specs logic ---
   const rawGpus = form.gpus.value.trim();
   data.auto_gpus = document.getElementById('autoGpus').checked;
@@ -360,44 +396,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Template variable add/remove functionality
-  function setupTemplateVarButtons() {
-    // Remove all buttons first
-    document.querySelectorAll('.template-var-row').forEach((row, idx, rows) => {
-      // Remove all buttons
-      row.querySelectorAll('button').forEach(btn => btn.remove());
-      // Add + to last row only
-      if (idx === rows.length - 1) {
-        const addBtn = document.createElement('button');
-        addBtn.type = 'button';
-        addBtn.className = 'add-var-btn';
-        addBtn.style.marginLeft = '5px';
-        addBtn.textContent = '+';
-        addBtn.onclick = function() {
-          const container = document.getElementById('templateVars');
-          const newRow = document.createElement('div');
-          newRow.className = 'template-var-row';
-          newRow.innerHTML = `<input name="template_var" placeholder="variable name" style="width: 200px; display: inline-block;">`;
-          container.appendChild(newRow);
-          setupTemplateVarButtons();
-        };
-        row.appendChild(addBtn);
-      }
-      // Add - to all rows except the first
-      if (rows.length > 1 && idx > 0) {
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'remove-var-btn';
-        removeBtn.style.marginLeft = '5px';
-        removeBtn.textContent = '-';
-        removeBtn.onclick = function() {
-          row.remove();
-          setupTemplateVarButtons();
-        };
-        row.appendChild(removeBtn);
-      }
-    });
-  }
-  
   setupTemplateVarButtons();
 });
 document.addEventListener('DOMContentLoaded', function() {
@@ -546,18 +544,27 @@ function loadFormData() {
       row.innerHTML = `<input name="template_var" placeholder="variable name" style="width: 200px; display: inline-block;">`;
       container.appendChild(row);
     }
-    // Re-setup add/remove buttons
-    if (typeof setupTemplateVarButtons === 'function') setupTemplateVarButtons();
   }
   // Restore set_objective_code
   if (data.set_objective_code && document.getElementById('setObjectiveEditor')) {
     document.getElementById('setObjectiveEditor').value = data.set_objective_code;
+  }
+  // Ensure templated fields are shown if templated_enable is true
+  const templatedEnable = document.getElementById('templatedEnable');
+  const templatedFields = document.getElementById('templatedFields');
+  if (templatedEnable && templatedFields) {
+    if (templatedEnable.checked) {
+      templatedFields.style.display = '';
+    } else {
+      templatedFields.style.display = 'none';
+    }
   }
   // Trigger change events for UI logic
   document.querySelectorAll('input, select').forEach(el => {
     if (typeof el.onchange === 'function') el.onchange();
   });
   alert('Loaded "' + name + '"');
+  setupTemplateVarButtons();
 }
 function deleteFormData() {
   const dropdown = document.getElementById('savedEntriesDropdown');
