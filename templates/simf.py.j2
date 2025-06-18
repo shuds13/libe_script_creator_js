@@ -3,7 +3,9 @@ import jinja2
 # Optional status codes to display in libE_stats.txt for each gen or sim
 from libensemble.message_numbers import TASK_FAILED, WORKER_DONE
 
+
 {{{ set_objective_code }}}
+
 
 def set_input_file_params(H, sim_specs, ints=False):
     """
@@ -14,9 +16,12 @@ def set_input_file_params(H, sim_specs, ints=False):
     corresponds to a different input name in sim_specs["user"]["input_names"]).
     Effectively an unpacking of "x"
     """
-    input_file = sim_specs["user"]["input_filename"]
+    input_file = sim_specs["user"].get("input_filename")
+    input_names = sim_specs["user"].get("input_names")
+    if not input_file or not input_names:
+        return
     input_values = {}
-    for i, name in enumerate(sim_specs["user"]["input_names"]):
+    for i, name in enumerate(input_names):
         value = int(H["x"][0][i]) if ints else H["x"][0][i]
         input_values[name] = value
     with open(input_file, "r") as f:
