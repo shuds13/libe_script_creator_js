@@ -557,6 +557,13 @@ function loadFormData() {
     document.getElementById('setObjectiveEditor').value = data.set_objective_code;
   }
   
+  // Ensure templated fields are shown/hidden correctly after loading
+  const templatedEnable = document.getElementById('templatedEnable');
+  const templatedFields = document.getElementById('templatedFields');
+  if (templatedEnable && templatedFields) {
+    templatedFields.style.display = templatedEnable.checked ? '' : 'none';
+  }
+  
   // Trigger all the necessary events to update UI properly
   // Generator dropdowns
   const modSel = document.getElementById("gen_module");
