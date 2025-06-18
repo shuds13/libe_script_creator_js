@@ -80,6 +80,21 @@
     .copy-btn:hover { opacity: 1; }
     .copy-btn svg { width: 22px; height: 22px; display: block; }
     .copy-btn.copied svg { color: #28a745; }
+    .side-by-side-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 8px;
+    }
+    .side-by-side-row label {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    .short-number {
+      width: 80px !important;
+      max-width: 100px;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
@@ -111,8 +126,10 @@
           <label>Application Reference Name: <input name="app_ref" required></label>
         </fieldset>
         <fieldset><legend><strong>Manager Settings</strong></legend>
-          <label>Dimension (number of parameters): <input name="dimension" type="number" min="1" value="2" required></label>
-          <label>Max Simulations: <input name="max_sims" type="number" min="1"></label>
+          <div class="side-by-side-row">
+            <label>Dimension (no. of params): <input class="short-number" name="dimension" type="number" min="1" value="2" required></label>
+            <label>Max Simulations: <input class="short-number" name="max_sims" type="number" min="1"></label>
+          </div>
           <label>MPI App Full Path: <input name="sim_app" required></label>
           <div style="margin-bottom: 8px;">
             <label style="display: block; margin-bottom: 4px;">Input Type:</label>
@@ -189,8 +206,10 @@ beam_height: {{bh}}
           </div>
         </fieldset>
         <fieldset><legend><strong>Worker Settings (for each simulation)</strong></legend>
-          <label>Number of Nodes: <input name="nodes" type="number" placeholder="Auto"></label>
-          <label>Number of Procs: <input name="procs" type="number" min="1" value="1"></label>
+          <div class="side-by-side-row">
+            <label>Number of Nodes: <input class="short-number" name="nodes" type="number" placeholder="Auto"></label>
+            <label>Number of Procs: <input class="short-number" name="procs" type="number" min="1" value="1"></label>
+          </div>
           <label>Number of GPUs:</label>
           <div style="display: flex; align-items: center; gap: 8px;">
             <input name="gpus" type="number" min="0" value="0" id="gpusInput">
