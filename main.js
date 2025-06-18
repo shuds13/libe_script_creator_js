@@ -19,7 +19,7 @@ const GEN_TO_ALLOC = {
   }
 };
 
-// Move setupTemplateVarButtons to global scope
+// Keep only setupTemplateVarButtons global since it needs to be called from loadFormData
 function setupTemplateVarButtons() {
   document.querySelectorAll('.template-var-row').forEach((row, idx, rows) => {
     // Remove all buttons
@@ -57,56 +57,6 @@ function setupTemplateVarButtons() {
   });
 }
 
-// Global UI update functions
-function updateInputLabels() {
-  const inputPathLabelText = document.getElementById('inputPathLabelText');
-  const templatedFileLabel = document.getElementById('templatedFileLabel');
-  if (!inputPathLabelText || !templatedFileLabel) return;
-  
-  const isDirectory = document.querySelector('input[name="input_type"]:checked')?.value === 'directory';
-  inputPathLabelText.textContent = isDirectory ? 'Input Directory:' : 'Input File Path:';
-  // Only show Template Filename if both Directory and Templated are selected
-  const templatedChecked = document.getElementById('templatedEnable')?.checked;
-  templatedFileLabel.style.display = (isDirectory && templatedChecked) ? '' : 'none';
-}
-
-function updateTemplatedFieldsVisibility() {
-  const templatedEnable = document.getElementById('templatedEnable');
-  const templatedFields = document.getElementById('templatedFields');
-  if (templatedEnable && templatedFields) {
-    templatedFields.style.display = templatedEnable.checked ? '' : 'none';
-  }
-}
-
-function updateClusterFieldsVisibility() {
-  const clusterEnable = document.getElementById('clusterEnable');
-  const clusterFields = document.getElementById('clusterFields');
-  if (clusterEnable && clusterFields) {
-    clusterFields.style.display = clusterEnable.checked ? '' : 'none';
-  }
-}
-
-function updateAutoGpusState() {
-  const autoGpus = document.getElementById('autoGpus');
-  const gpusInput = document.getElementById('gpusInput');
-  const nodesInput = document.querySelector('input[name="nodes"]');
-  const procsInput = document.querySelector('input[name="procs"]');
-  
-  if (autoGpus && gpusInput && nodesInput && procsInput) {
-    const disabled = autoGpus.checked;
-    gpusInput.disabled = disabled;
-    nodesInput.disabled = disabled;
-    procsInput.disabled = disabled;
-  }
-}
-
-function updateGeneratorDropdowns() {
-  const modSel = document.getElementById("gen_module");
-  if (modSel && modSel.onchange) {
-    modSel.onchange();
-  }
-}
-
 async function fetchTemplates(clusterEnabled, schedulerType) {
   const ts = Date.now();
   const promises = [
@@ -127,6 +77,7 @@ async function fetchTemplates(clusterEnabled, schedulerType) {
     batchTpl: results[2] || null 
   };
 }
+
 fetch("data/generators.json").then(res => res.json()).then(data => {
   const modSel = document.getElementById("gen_module"), funcSel = document.getElementById("gen_function");
   Object.keys(data).forEach(mod => modSel.add(new Option(mod, mod)));
@@ -409,33 +360,41 @@ document.getElementById("fillBtn").onclick = function() {
 // Cluster section show/hide logic
 document.addEventListener('DOMContentLoaded', function() {
   const clusterEnable = document.getElementById('clusterEnable');
+  const clusterFields = document.getElementById('clusterFields');
   if (clusterEnable) {
     clusterEnable.addEventListener('change', function() {
-      updateClusterFieldsVisibility();
+      clusterFields.style.display = this.checked ? '' : 'none';
     });
     // Set initial state on page load
-    updateClusterFieldsVisibility();
+    clusterFields.style.display = clusterEnable.checked ? '' : 'none';
   }
 });
 // Template variables management
 document.addEventListener('DOMContentLoaded', function() {
   // Input type change handler
   const inputTypeRadios = document.querySelectorAll('input[name="input_type"]');
+  const inputPathLabelText = document.getElementById('inputPathLabelText');
+  const templatedFileLabel = document.getElementById('templatedFileLabel');
+  
+  function updateInputLabels() {
+    const isDirectory = document.querySelector('input[name="input_type"]:checked').value === 'directory';
+    inputPathLabelText.textContent = isDirectory ? 'Input Directory:' : 'Input File Path:';
+    // Only show Template Filename if both Directory and Templated are selected
+    const templatedChecked = document.getElementById('templatedEnable').checked;
+    templatedFileLabel.style.display = (isDirectory && templatedChecked) ? '' : 'none';
+  }
   
   inputTypeRadios.forEach(radio => {
-    radio.addEventListener('change', function() {
-      updateInputLabels();
-    });
+    radio.addEventListener('change', updateInputLabels);
   });
   
   // Templated checkbox handler
   const templatedEnable = document.getElementById('templatedEnable');
-  if (templatedEnable) {
-    templatedEnable.addEventListener('change', function() {
-      updateTemplatedFieldsVisibility();
-      updateInputLabels(); // Also update template file label visibility
-    });
-  }
+  const templatedFields = document.getElementById('templatedFields');
+  templatedEnable.addEventListener('change', function() {
+    templatedFields.style.display = this.checked ? '' : 'none';
+    updateInputLabels(); // Also update template file label visibility
+  });
   
   // Template variable add/remove functionality
   setupTemplateVarButtons();
@@ -464,6 +423,9 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
   // Auto GPU logic
   const autoGpus = document.getElementById('autoGpus');
+  const gpusInput = document.getElementById('gpusInput');
+  const nodesInput = document.querySelector('input[name="nodes"]');
+  const procsInput = document.querySelector('input[name="procs"]');
   const autoGpusTooltipLabel = autoGpus?.parentElement;
   const autoGpusTooltip = document.getElementById('autoGpusTooltip');
   
@@ -482,12 +444,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  if (autoGpus) {
+  function setResourceFieldsDisabled(disabled) {
+    gpusInput.disabled = disabled;
+    nodesInput.disabled = disabled;
+    procsInput.disabled = disabled;
+  }
+  
+  if (autoGpus && gpusInput && nodesInput && procsInput) {
     autoGpus.addEventListener('change', function() {
-      updateAutoGpusState();
+      setResourceFieldsDisabled(this.checked);
     });
     // Set initial state on page load
-    updateAutoGpusState();
+    setResourceFieldsDisabled(autoGpus.checked);
   }
 });
 // --- Subtle Load/Save dropdown logic ---
@@ -551,6 +519,7 @@ function loadFormData() {
   if (!name) { alert('Select a saved entry to load.'); return; }
   const data = JSON.parse(localStorage.getItem('libeFormData:' + name) || '{}');
   const form = document.getElementById('scriptForm');
+  
   for (const [k, v] of Object.entries(data)) {
     if (form.elements[k]) {
       if (form.elements[k].type === 'checkbox') {
@@ -563,6 +532,7 @@ function loadFormData() {
       }
     }
   }
+  
   // Restore template vars
   if (Array.isArray(data.template_vars)) {
     const container = document.getElementById('templateVars');
@@ -581,31 +551,32 @@ function loadFormData() {
       container.appendChild(row);
     }
   }
+  
   // Restore set_objective_code
   if (data.set_objective_code && document.getElementById('setObjectiveEditor')) {
     document.getElementById('setObjectiveEditor').value = data.set_objective_code;
   }
   
-  // Update generator dropdowns to populate function options based on selected module
-  updateGeneratorDropdowns();
-  
-  // If we have saved gen_function, set it after the dropdown is populated
-  if (data.gen_function) {
-    setTimeout(() => {
-      const funcSel = document.getElementById('gen_function');
-      if (funcSel) {
-        funcSel.value = data.gen_function;
-      }
-    }, 10);
+  // Trigger all the necessary events to update UI properly
+  // Generator dropdowns
+  const modSel = document.getElementById("gen_module");
+  if (modSel && modSel.onchange) {
+    modSel.onchange(); // This populates the function dropdown
+    // Set function value after dropdown is populated
+    if (data.gen_function) {
+      setTimeout(() => {
+        const funcSel = document.getElementById('gen_function');
+        if (funcSel) funcSel.value = data.gen_function;
+      }, 10);
+    }
   }
   
-  // Update all UI field visibility based on loaded values
-  updateTemplatedFieldsVisibility();
-  updateInputLabels();
-  updateClusterFieldsVisibility();
-  updateAutoGpusState();
-  setupTemplateVarButtons();
+  // Trigger change events for UI updates
+  document.querySelectorAll('input[type="radio"], input[type="checkbox"], select').forEach(el => {
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
   
+  setupTemplateVarButtons();
   alert('Loaded "' + name + '"');
 }
 function deleteFormData() {
