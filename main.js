@@ -76,6 +76,10 @@ document.getElementById('scriptForm').onsubmit = async function(e) {
       data[k] = v;
     }
   }
+  // Set dimension, lb_array, ub_array before rendering customGenSpecsStr
+  data.dimension = parseInt(form.dimension.value);
+  data.lb_array = 'np.array([' + Array(data.dimension).fill(0.0).join(', ') + '])';
+  data.ub_array = 'np.array([' + Array(data.dimension).fill(3.0).join(', ') + '])';
   // --- Custom gen_specs logic ---
   const genModule = (data.gen_module || '').toLowerCase().trim();
   const genFunc = (data.gen_function || '').toLowerCase().trim();
@@ -148,18 +152,6 @@ document.getElementById('scriptForm').onsubmit = async function(e) {
     data.template_vars_list = '';
   }
   
-  data.dimension = parseInt(form.dimension.value);
-  // Generate lb and ub arrays as strings for the template
-  data.lb_array = 'np.array([' + Array(data.dimension).fill(0.0).join(', ') + '])';
-  data.ub_array = 'np.array([' + Array(data.dimension).fill(3.0).join(', ') + '])';
-  
-  // Output Parsing: set_objective
-  if (document.getElementById('customSetObjective').checked) {
-    data.set_objective_code = document.getElementById('setObjectiveEditor').value;
-  } else {
-    data.set_objective_code = getDefaultSetObjectiveCode(data);
-  }
-  
   let allocInfo;
   if (data.gen_function && data.gen_function.toLowerCase().includes("aposmm")) {
     allocInfo = GEN_TO_ALLOC["aposmm"];
@@ -170,6 +162,12 @@ document.getElementById('scriptForm').onsubmit = async function(e) {
   data.alloc_function = allocInfo.alloc_function;
   data.alloc_specs_user = allocInfo.alloc_specs_user;
   
+  // Set set_objective_code just before rendering templates, to ensure it is always present
+  if (document.getElementById('customSetObjective').checked) {
+    data.set_objective_code = document.getElementById('setObjectiveEditor').value;
+  } else {
+    data.set_objective_code = getDefaultSetObjectiveCode(data);
+  }
   const { runTpl, simfTpl, batchTpl } = await fetchTemplates(data.cluster_enabled, data.scheduler_type);
   Mustache.escape=text=>text;
   const runRendered = Mustache.render(runTpl,data);
