@@ -50,12 +50,14 @@ def run_{{ app_ref }}(H, persis_info, sim_specs, libE_info):
                         {{#nodes}}
                         num_nodes={{nodes}},
                         {{/nodes}}
+                        {{#procs}}
                         num_procs={{procs}},
+                        {{/procs}}
                         {{#num_gpus}}
                         num_gpus={{ num_gpus }},
                         {{/num_gpus}}
                         {{/auto_gpus}}
-                        )
+    )
 
     # Block until the task finishes
     task.wait()

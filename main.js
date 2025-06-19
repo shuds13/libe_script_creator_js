@@ -115,14 +115,14 @@ document.getElementById('scriptForm').onsubmit = async function(e) {
   }
   // --- End ensure ---
   for (const [k,v] of new FormData(form).entries()) {
-    if (k === 'nodes') {
+    if (k === 'nodes' || k === 'procs') {
       if (v.trim() !== '' && v !== '0') {
-        const nodeValue = parseInt(v, 10);
-        if (nodeValue <= 0) {
-          alert('Number of Nodes must be greater than 0 (or leave empty/0 for Auto)');
+        const numValue = parseInt(v, 10);
+        if (numValue <= 0) {
+          alert(`Number of ${k === 'nodes' ? 'Nodes' : 'Procs'} must be greater than 0 (or leave empty/0 for Auto)`);
           return;
         }
-        data.nodes = nodeValue;
+        data[k] = numValue;
       }
     } else {
       data[k] = v;
@@ -486,6 +486,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle up/down arrows
     nodesInput.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowDown') {
+        const value = e.target.value.trim();
+        if (value === '1') {
+          e.preventDefault();
+          e.target.value = '';
+        }
+      } else if (e.key === 'ArrowUp') {
+        const value = e.target.value.trim();
+        if (value === '') {
+          e.preventDefault();
+          e.target.value = '1';
+        }
+      }
+    });
+  }
+
+  // Add same validation for procs input
+  if (procsInput) {
+    procsInput.addEventListener('input', function(e) {
+      const value = e.target.value.trim();
+      if (value === '0') {
+        e.target.value = '';
+      } else if (value !== '') {
+        const numValue = parseInt(value, 10);
+        if (numValue <= 0) {
+          e.target.value = '';
+        }
+      }
+    });
+
+    // Handle up/down arrows
+    procsInput.addEventListener('keydown', function(e) {
       if (e.key === 'ArrowDown') {
         const value = e.target.value.trim();
         if (value === '1') {
