@@ -270,7 +270,7 @@ beam_height: {{bh}}
           <label>Number of Workers: <input name="num_workers" type="number" min="1" required></label>
           <label class="checkbox-label">Run on Cluster <input type="checkbox" id="clusterEnable" name="cluster_enable"></label>
           <div id="clusterFields" style="display:none; margin-top:8px;">
-            <label>Total Nodes: <input name="cluster_total_nodes" type="number" value="1"></label>
+            <label>Total Nodes: <input name="cluster_total_nodes" type="number" min="1" value="1"></label>
             <label>Scheduler Type:
               <select name="scheduler_type">
                 <option value="slurm">Slurm</option>
