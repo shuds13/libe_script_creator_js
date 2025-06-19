@@ -143,6 +143,24 @@
       color: #666;
       margin-top: 2px;
     }
+    .info-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      font-size: 10px;
+      margin-left: 4px;
+      font-weight: bold;
+      vertical-align: middle;
+    }
+    .info-link:hover {
+      background: #0056b3;
+    }
   </style>
 </head>
 <body>
@@ -234,7 +252,7 @@ beam_height: {{bh}}
             </div>
           </div>
         </fieldset>
-        <fieldset><legend><strong>Generator Selection</strong></legend>
+        <fieldset><legend><strong>Generator Selection</strong> <a href="https://libensemble.readthedocs.io/en/main/examples/gen_funcs.html" target="_blank" class="info-link" title="View full list of generators">?</a></legend>
           <label>Generator Module: <select name="gen_module" id="gen_module"></select></label>
           <label>Generator Function: <select name="gen_function" id="gen_function"></select></label>
         </fieldset>
