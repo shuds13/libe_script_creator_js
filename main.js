@@ -80,8 +80,15 @@ async function fetchTemplates(clusterEnabled, schedulerType) {
 
 fetch("data/generators.json").then(res => res.json()).then(data => {
   const modSel = document.getElementById("gen_module"), funcSel = document.getElementById("gen_function");
-  Object.keys(data).forEach(mod => modSel.add(new Option(mod, mod)));
-  modSel.onchange = () => { funcSel.innerHTML = ""; data[modSel.value].forEach(f => funcSel.add(new Option(f, f))); };
+  Object.keys(data).forEach(mod => {
+    const option = new Option(mod, mod);
+    option.title = data[mod].description;  // Add tooltip
+    modSel.add(option);
+  });
+  modSel.onchange = () => {
+    funcSel.innerHTML = "";
+    data[modSel.value].generators.forEach(f => funcSel.add(new Option(f, f)));
+  };
   modSel.onchange();
 });
 document.getElementById("layoutSideBySide").onclick = function() {
