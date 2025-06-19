@@ -1,41 +1,18 @@
 {
-  "persistent_sampling": [
-    "persistent_uniform",
-    "persistent_uniform_final_update",
-    "persistent_request_shutdown",
-    "uniform_nonblocking",
-    "batched_history_matching",
-    "persistent_uniform_with_cancellations"
-  ],
-  "persistent_gpCAM": [
-    "persistent_gpCAM",
-    "persistent_gpCAM_covar"
-  ],
-  "persistent_sampling_var_resources": [
-    "uniform_sample",
-    "uniform_sample_with_var_gpus",
-    "uniform_sample_with_procs_gpus",
-    "uniform_sample_with_var_priorities",
-    "uniform_sample_diff_simulations",
-    "uniform_sample_with_sim_gen_resources"
-  ],
-  "persistent_inverse_bayes": [
-    "persistent_updater_after_likelihood"
-  ],
-  "persistent_ax_multitask": [
-    "persistent_gp_mt_ax_gen_f"
-  ],
-  "persistent_aposmm": [
-    "aposmm"
-  ],
-  "persistent_tasmanian": [
-    "sparse_grid_batched",
-    "sparse_grid_async"
-  ],
-  "persistent_surmise_calib": [
-    "surmise_calib"
-  ],
-  "uniform_or_localopt": [
-    "uniform_or_localopt"
-  ]
+  "persistent_sampling": {
+    "description": "Generators that perform sampling across the parameter space",
+    "generators": ["persistent_uniform"]
+  },
+  "persistent_sampling_var_resources": {
+    "description": "Sampling generators that assign CPU/GPU resources for each simulation",
+    "generators": ["uniform_sample_with_procs_gpus"]
+  },
+  "persistent_gpCAM": {
+    "description": "Gaussian Process-based surrogate model generation",
+    "generators": ["persistent_gpCAM", "persistent_gpCAM_covar"]
+  },
+  "persistent_aposmm": {
+    "description": "Asynchronous Parallel Optimization",
+    "generators": ["aposmm"]
+  }
 }
