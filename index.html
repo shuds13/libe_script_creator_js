@@ -161,6 +161,14 @@
     .info-link:hover {
       background: #0056b3;
     }
+    .field-help {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 6px;
+      font-size: 10px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -188,7 +196,7 @@
   <form id="scriptForm">
     <div class="form-columns">
       <div class="form-column">
-        <fieldset><legend><strong>Application Reference</strong></legend>
+        <fieldset><legend><strong>Application Reference</strong> <span class="info-link" title="Provide any name as a label">?</span></legend>
           <label>Application Reference Name: <input name="app_ref" required></label>
         </fieldset>
         <fieldset><legend><strong>Manager Settings</strong></legend>
