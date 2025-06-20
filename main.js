@@ -101,6 +101,7 @@ document.getElementById("layoutStacked").onclick = function() {
 };
 document.getElementById('scriptForm').onsubmit = async function(e) {
   e.preventDefault();
+  document.getElementById('customizeText').style.display = 'block';
   const form = e.target, data = {};
   // --- Ensure set_objective_code is never empty if customizing ---
   const customSetObjective = document.getElementById('customSetObjective').checked;
